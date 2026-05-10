@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>邮件发放平台原型 · 主控台</title>
+  <link rel="stylesheet" href="./prototype-assets/ui.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">邮</div>
+        <div class="brand-text">
+          <strong>邮件发放平台原型</strong>
+          <span>高保真汇报版 · 主控台 / 邮件发放链路</span>
+        </div>
+      </div>
+      <nav class="topnav">
+        <a href="#overview" class="active">平台总览</a>
+        <a href="#compose">邮件配置</a>
+        <a href="#approval">审批灰度</a>
+        <a href="#launch">发前预检</a>
+        <a href="./incident-response-prototype.html">异常熔断处置页</a>
+      </nav>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="hero-eyebrow">Design Principles</div>
+        <h3>强约束优先，人机协同提效</h3>
+        <p>
+          原型围绕“系统先拦、人工拍板、Agent 辅助”展开，把数值熔断、目标范围校验、灰度冻结、Hash 一致性和业务熔断做成可演示交互。
+        </p>
+        <div class="side-links">
+          <a class="side-link" href="#overview">
+            <strong>01. 版本总览</strong>
+            <span>用指标卡与风险摘要快速判断当前邮件状态。</span>
+          </a>
+          <a class="side-link" href="#compose">
+            <strong>02. 制单与防错</strong>
+            <span>高价值资产锁、数值熔断和范围偏差提示。</span>
+          </a>
+          <a class="side-link" href="#approval">
+            <strong>03. 审批与灰度</strong>
+            <span>复核、审批、正式服灰度和小流量试发。</span>
+          </a>
+          <a class="side-link" href="#launch">
+            <strong>04. 发前预检</strong>
+            <span>快照冻结、Hash 强绑定、最终放行条件。</span>
+          </a>
+        </div>
+        <div class="side-metrics" style="margin-top: 16px;">
+          <div class="side-metric">
+            <strong>安全目标</strong>
+            <span>防止“审批是 A，正式发送变成 B”的配置漂移事故。</span>
+          </div>
+          <div class="side-metric">
+            <strong>演示重点</strong>
+            <span>支持稳态补偿、高危误配、范围漂移三类场景切换。</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="content">
+        <section id="overview" class="hero-grid">
+          <article class="hero-card">
+            <div class="hero-eyebrow">Mail Ops Control Center</div>
+            <h1>把风险前置到配置层，<br />把发送权限留在人工手里</h1>
+            <p>
+              页面演示从邮件建单、风险识别、审批与正式服灰度，到快照冻结、发前预检、正式发送解锁的完整闭环。
+              你可以通过切换场景和点击按钮，直观看到系统如何把“高危误配、目标范围漂移、灰度后偷改配置”拦在发放前。
+            </p>
+            <div class="hero-actions">
+              <button class="btn btn-primary" id="btnHeroAnalyze">重新分析当前场景</button>
+              <a class="btn btn-secondary" href="./incident-response-prototype.html">查看异常熔断 / 事故处置页</a>
+            </div>
+          </article>
+
+          <div class="metric-rail">
+            <article class="metric-card">
+              <small>当前邮件风险级别</small>
+              <strong id="metricRisk">P2</strong>
+              <p id="metricRiskCopy">稳态补偿场景，数值和范围均处在可控区间内。</p>
+            </article>
+            <article class="metric-card">
+              <small>预计触达玩家</small>
+              <strong id="metricAudience">38,420</strong>
+              <p id="metricAudienceCopy">目标分群与历史异常补偿基线接近。</p>
+            </article>
+            <article class="metric-card dark-card">
+              <small>最终放行状态</small>
+              <strong id="metricLaunch">锁定</strong>
+              <p id="metricLaunchCopy">在完成灰度、小流量试发和发前预检前，平台不会放出正式发送权限。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="summary-grid">
+          <article class="metric-card">
+            <small>快照状态</small>
+            <strong id="metricSnapshot">未冻结</strong>
+            <p>进入审批后自动生成不可变发放快照。</p>
+          </article>
+          <article class="metric-card">
+            <small>灰度覆盖度</small>
+            <strong id="metricGray">0%</strong>
+            <p>需覆盖不同区服、平台、渠道和账号状态。</p>
+          </article>
+          <article class="metric-card">
+            <small>业务异常监控</small>
+            <strong id="metricBusiness">待机</strong>
+            <p>技术监控与业务监控双轨并行，不只看接口报错。</p>
+          </article>
+          <article class="metric-card">
+            <small>Agent 辅助状态</small>
+            <strong id="metricAgent">可用</strong>
+            <p>Agent 负责看、算、提、写，不直接拍板。</p>
+          </article>
+        </section>
+
+        <section class="card">
+          <div class="section-head">
+            <div>
+              <h2>场景切换</h2>
+              <p>通过三类典型场景观察页面联动：正常补偿、高危误配、目标范围漂移。</p>
+            </div>
+            <span class="pill violet">交互演示入口</span>
+          </div>
+          <div class="scenario-row" id="scenarioRow"></div>
+        </section>
+
+        <section id="compose" class="workbench">
+          <div class="stack">
+            <article class="card">
+              <div class="section-head">
+                <div>
+                  <h2>01. 制单与高风险拦截</h2>
+                  <p>在配置阶段同时校验奖励类型、数值规模、目标范围与历史基线偏差。</p>
+                </div>
+                <span class="pill blue">Compose</span>
+              </div>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="mailType">邮件类型</label>
+                  <select id="mailType">
+                    <option value="compensation">异常补偿</option>
+                    <option value="operation">活动发奖</option>
+                    <option value="notice">系统公告</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="rewardType">奖励类型</label>
+                  <select id="rewardType">
+                    <option value="gold">金币</option>
+                    <option value="diamond">钻石</option>
+                    <option value="ticket">抽卡券</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="rewardAmount">奖励数值</label>
+                  <input id="rewardAmount" type="number" min="0" step="1" />
+                </div>
+                <div class="field">
+                  <label for="segment">目标分群</label>
+                  <select id="segment">
+                    <option value="affected">登录异常玩家</option>
+                    <option value="android">安卓国服异常玩家</option>
+                    <option value="returning">回流玩家</option>
+                    <option value="all">全服玩家</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="estimatedUsers">预计人数</label>
+                  <input id="estimatedUsers" type="number" min="0" step="1" />
+                </div>
+                <div class="field">
+                  <label for="sendWindow">预计发送时间</label>
+                  <input id="sendWindow" type="datetime-local" />
+                </div>
+                <div class="field full">
+                  <label for="messageBody">邮件说明</label>
+                  <textarea id="messageBody"></textarea>
+                </div>
+              </div>
+
+              <div class="chip-grid" style="margin-top: 16px;">
+                <div class="chip">
+                  <small>历史常用区间</small>
+                  <strong id="baselineHint">60 - 300</strong>
+                </div>
+                <div class="chip">
+                  <small>高价值资产总量</small>
+                  <strong id="volumeHint">2.3M</strong>
+                </div>
+                <div class="chip">
+                  <small>目标画像偏差</small>
+                  <strong id="driftHint">正常</strong>
+                </div>
+                <div class="chip">
+                  <small>模板状态</small>
+                  <strong id="templateHint">普通</strong>
+                </div>
+              </div>
+
+              <div class="action-row">
+                <button class="btn btn-secondary" id="btnAnalyze">重新分析风险</button>
+                <button class="btn btn-primary" id="btnFreeze">提交审批并冻结快照</button>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="section-head">
+                <div>
+                  <h2>02. 风险引擎解释层</h2>
+                  <p>让审批人看到系统为何判断高危，而不是只得到一个红灯结果。</p>
+                </div>
+                <span class="pill gold">Explainability</span>
+              </div>
+              <div class="banner safe" id="riskBanner">
+                <h3 id="riskTitle">当前配置可进入审批</h3>
+                <p id="riskCopy">数值、范围和资产价值均在可控区间内，建议继续进入人工复核。</p>
+              </div>
+              <div class="checklist" id="riskChecklist"></div>
+            </article>
+          </div>
+
+          <div class="stack">
+            <article class="card">
+              <div class="section-head">
+                <div>
+                  <h2>状态总览</h2>
+                  <p>每一步的状态变化都围绕同一份配置快照展开。</p>
+                </div>
+                <span class="pill teal">State Machine</span>
+              </div>
+              <div class="timeline-list" id="timelineList"></div>
+              <div class="helper" id="timelineHint">
+                任何关键字段变更都会使审批与灰度结果失效，状态自动回退到待审批。
+              </div>
+            </article>
+
+            <article class="card dark-card">
+              <div class="section-head">
+                <div>
+                  <h2>不可变快照</h2>
+                  <p>防止“审批是 A，正式发送变成 B”的配置漂移。</p>
+                </div>
+                <span class="pill dark" id="snapshotPill">未冻结</span>
+              </div>
+              <div class="snapshot-box">
+                <div class="hash-box" id="hashBox">MAILCONFIGHASH: PENDING</div>
+                <div class="snapshot-row">
+                  <span>快照版本</span>
+                  <strong id="snapshotVersion">v0 草稿</strong>
+                </div>
+                <div class="snapshot-row">
+                  <span>配置状态</span>
+                  <strong id="snapshotState">可编辑</strong>
+                </div>
+                <div class="snapshot-row">
+                  <span>发前预检</span>
+                  <strong id="preflightState">未执行</strong>
+                </div>
+              </div>
+              <div class="helper" id="snapshotHint">
+                审批、灰度、正式发送会被统一绑定到同一份 Hash。
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section id="approval" class="detail-grid">
+          <article class="card">
+            <div class="section-head">
+              <div>
+                <h2>03. 人工复核与业务审批</h2>
+                <p>系统先识别风险，人工再对“为什么发、发给谁、发多少”进行拍板。</p>
+              </div>
+              <span class="pill gold">Human in the Loop</span>
+            </div>
+            <div class="mini-grid">
+              <div class="mini-card">
+                <strong>人工复核人</strong>
+                <p>核对奖励类型、奖励数值、目标范围、模板版本和预计影响人数。</p>
+              </div>
+              <div class="mini-card">
+                <strong>业务审批人</strong>
+                <p>确认当前问题是否值得补偿，以及补偿对象和时机是否合理。</p>
+              </div>
+            </div>
+            <div class="action-row">
+              <button class="btn btn-secondary" id="btnReview" disabled>人工复核通过</button>
+              <button class="btn btn-primary" id="btnApprove" disabled>业务审批放行</button>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="section-head">
+              <div>
+                <h2>04. 正式服灰度与小流量试发</h2>
+                <p>灰度不只验证“能不能领”，还验证目标分群是否被正确覆盖。</p>
+              </div>
+              <span class="pill violet">Gray Gate</span>
+            </div>
+            <div class="sample-grid" id="sampleGrid"></div>
+            <div class="progress"><span id="grayBar" style="width: 0%"></span></div>
+            <div class="helper" id="grayHint">
+              需覆盖不同区服、平台、渠道和账号状态。灰度通过后原单进入只读。
+            </div>
+            <div class="action-row">
+              <button class="btn btn-secondary" id="btnGray" disabled>执行正式服灰度</button>
+              <button class="btn btn-violet" id="btnPilot" disabled>真实分群小流量试发</button>
+            </div>
+          </article>
+        </section>
+
+        <section id="launch" class="double-grid">
+          <article class="card">
+            <div class="section-head">
+              <div>
+                <h2>05. 发前预检与正式发送放行</h2>
+                <p>在真正放出发送权限前，再次核对 Hash、一致性、资产总量和目标人数漂移。</p>
+              </div>
+              <span class="pill red">Preflight</span>
+            </div>
+            <div class="decision-grid">
+              <div class="decision-card">
+                <strong>一致性校验</strong>
+                <p id="consistencyText">审批 Hash、灰度 Hash、发送 Hash 必须完全一致，否则平台直接阻断发送。</p>
+              </div>
+              <div class="decision-card">
+                <strong>最终放行条件</strong>
+                <p id="launchText">需完成复核、审批、灰度、小流量试发和发前预检，且无业务异常告警。</p>
+              </div>
+            </div>
+            <div class="action-row">
+              <button class="btn btn-secondary" id="btnPreflight" disabled>执行发前预检</button>
+              <button class="btn btn-primary" id="btnLaunch" disabled>解锁正式发送</button>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="section-head">
+              <div>
+                <h2>06. Agent 辅助洞察</h2>
+                <p>Agent 负责辅助看、算、提、写，不直接拥有发放或审批权限。</p>
+              </div>
+              <span class="pill teal">Assistive AI</span>
+            </div>
+            <div class="agent-grid" id="agentGrid"></div>
+          </article>
+        </section>
+
+        <section class="incident-grid">
+          <article class="card">
+            <div class="section-head">
+              <div>
+                <h2>07. 业务与技术双轨监控</h2>
+                <p>就算技术指标正常，也要监控“是否已经在业务上发错”。</p>
+              </div>
+              <span class="pill green">Dual Monitoring</span>
+            </div>
+            <div class="heatmap" id="monitorMap"></div>
+            <div class="footer-note">
+              业务异常包括高价值资产发放量异常、目标分群外领取增长、实际领取人数与预估偏差等。
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="section-head">
+              <div>
+                <h2>08. 审计日志与处置入口</h2>
+                <p>主页面保留熔断入口，完整事故处置流程在子页面中展开。</p>
+              </div>
+              <span class="pill red">Audit Trail</span>
+            </div>
+            <div class="log-list" id="logList"></div>
+            <div class="inline-actions">
+              <button class="btn btn-danger" id="btnInterrupt" disabled>触发熔断止损</button>
+              <a class="page-link" href="./incident-response-prototype.html">进入异常熔断 / 事故处置页</a>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const scenarios = {
+      safe: {
+        key: "safe",
+        name: "稳态补偿",
+        desc: "登录异常补偿，金币奖励，范围与历史基线接近，适合演示正常放行链路。",
+        mailType: "compensation",
+        rewardType: "gold",
+        rewardAmount: 120,
+        segment: "affected",
+        estimatedUsers: 38420,
+        sendWindow: "2026-05-10T19:30",
+        messageBody: "亲爱的舰长，针对今日登录异常问题，我们向受影响玩家发放金币补偿，请注意查收。",
+        baselineMin: 60,
+        baselineMax: 300
+      },
+      danger: {
+        key: "danger",
+        name: "高危误配",
+        desc: "把基础货币误填成高价值钻石，并将目标范围误扩到全服，触发整套熔断逻辑。",
+        mailType: "compensation",
+        rewardType: "diamond",
+        rewardAmount: 10000,
+        segment: "all",
+        estimatedUsers: 2134522,
+        sendWindow: "2026-05-10T19:30",
+        messageBody: "亲爱的舰长，针对服务器异常，我们将向全服玩家发放钻石补偿，请注意查收。",
+        baselineMin: 60,
+        baselineMax: 300
+      },
+      drift: {
+        key: "drift",
+        name: "范围漂移",
+        desc: "奖励数值不夸张，但目标分群从异常玩家漂移到全服，模拟审批前的人群风险提示。",
+        mailType: "compensation",
+        rewardType: "gold",
+        rewardAmount: 300,
+        segment: "all",
+        estimatedUsers: 1438200,
+        sendWindow: "2026-05-10T20:00",
+        messageBody: "亲爱的舰长，针对版本体验反馈，我们将发放金币补偿，请注意查收。",
+        baselineMin: 100,
+        baselineMax: 500
+      }
+    };
+
+    const segmentHints = {
+      affected: "受影响异常玩家",
+      android: "安卓国服异常玩家",
+      returning: "回流玩家",
+      all: "全服玩家"
+    };
+
+    const rewardRules = {
+      gold: { label: "金币", highValue: false, softCap: 5000, hardCap: 50000, volumeFactor: 38 },
+      diamond: { label: "钻石", highValue: true, softCap: 300, hardCap: 1200, volumeFactor: 1 },
+      ticket: { label: "抽卡券", highValue: true, softCap: 3, hardCap: 10, volumeFactor: 1 }
+    };
+
+    const sampleProfiles = [
+      { title: "白名单账号 A", desc: "iOS / 官服 / 活跃玩家", cover: "基础路径" },
+      { title: "白名单账号 B", desc: "安卓 / 渠道服 / 轻度付费", cover: "渠道路径" },
+      { title: "白名单账号 C", desc: "PC / 国服 / 回流状态", cover: "分群路径" },
+      { title: "白名单账号 D", desc: "安卓 / 回流玩家 / 活动服", cover: "边界样本" }
+    ];
+
+    const timelineSteps = [
+      ["draft", "草稿配置", "配置可编辑，允许多次建单与风险分析。"],
+      ["review", "人工复核", "复核奖励、数值、范围和模板版本。"],
+      ["approve", "业务审批", "业务负责人拍板是否进入线上验证。"],
+      ["gray", "正式服灰度", "白名单账号必须真实收件并领取。"],
+      ["pilot", "小流量试发", "真实目标分群先跑样本，再决定是否放量。"],
+      ["preflight", "发前预检", "Hash、一致性、目标人数和资产总量复核。"],
+      ["launch", "正式发送", "满足全部条件后才解锁。"]
+    ];
+
+    const state = {
+      currentScenario: "safe",
+      locked: false,
+      reviewed: false,
+      approved: false,
+      grayed: false,
+      piloted: false,
+      preflight: false,
+      launched: false,
+      interrupted: false,
+      version: 0,
+      logs: []
+    };
+
+    const el = {};
+
+    function qs(id) { return document.getElementById(id); }
+
+    function bind() {
+      [
+        "scenarioRow", "mailType", "rewardType", "rewardAmount", "segment", "estimatedUsers", "sendWindow", "messageBody",
+        "baselineHint", "volumeHint", "driftHint", "templateHint", "riskBanner", "riskTitle", "riskCopy", "riskChecklist",
+        "timelineList", "timelineHint", "snapshotPill", "hashBox", "snapshotVersion", "snapshotState", "preflightState",
+        "snapshotHint", "sampleGrid", "grayBar", "grayHint", "consistencyText", "launchText", "agentGrid", "monitorMap",
+        "logList", "metricRisk", "metricRiskCopy", "metricAudience", "metricAudienceCopy", "metricLaunch",
+        "metricLaunchCopy", "metricSnapshot", "metricGray", "metricBusiness", "metricAgent",
+        "btnAnalyze", "btnFreeze", "btnReview", "btnApprove", "btnGray", "btnPilot", "btnPreflight", "btnLaunch",
+        "btnInterrupt", "btnHeroAnalyze"
+      ].forEach((id) => { el[id] = qs(id); });
+    }
+
+    function resetFlow() {
+      state.locked = false;
+      state.reviewed = false;
+      state.approved = false;
+      state.grayed = false;
+      state.piloted = false;
+      state.preflight = false;
+      state.launched = false;
+      state.interrupted = false;
+      state.version = 0;
+      state.logs = [];
+    }
+
+    function log(text, tone = "info") {
+      const time = new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      state.logs.unshift({ time, text, tone });
+      state.logs = state.logs.slice(0, 8);
+    }
+
+    function loadScenario(key) {
+      const s = scenarios[key];
+      state.currentScenario = key;
+      resetFlow();
+      el.mailType.value = s.mailType;
+      el.rewardType.value = s.rewardType;
+      el.rewardAmount.value = s.rewardAmount;
+      el.segment.value = s.segment;
+      el.estimatedUsers.value = s.estimatedUsers;
+      el.sendWindow.value = s.sendWindow;
+      el.messageBody.value = s.messageBody;
+      log(`已载入场景：${s.name}`, "info");
+      render();
+    }
+
+    function currentScenario() {
+      return scenarios[state.currentScenario];
+    }
+
+    function getConfig() {
+      const rewardType = el.rewardType.value;
+      const rewardAmount = Number(el.rewardAmount.value || 0);
+      const estimatedUsers = Number(el.estimatedUsers.value || 0);
+      const segment = el.segment.value;
+      const rule = rewardRules[rewardType];
+      const base = currentScenario();
+      const amountRisk = rewardAmount > rule.hardCap ? "danger" : rewardAmount > rule.softCap ? "warn" : "safe";
+      const audienceRisk = estimatedUsers > 500000 || segment === "all" ? (estimatedUsers > 1200000 ? "danger" : "warn") : "safe";
+      const driftRisk = estimatedUsers > base.estimatedUsers * 2.2 ? "warn" : "safe";
+      const overall = amountRisk === "danger" || audienceRisk === "danger"
+        ? "danger"
+        : amountRisk === "warn" || audienceRisk === "warn" || driftRisk === "warn" || rule.highValue
+          ? "warn"
+          : "safe";
+      return {
+        rewardType,
+        rewardAmount,
+        estimatedUsers,
+        segment,
+        rule,
+        base,
+        amountRisk,
+        audienceRisk,
+        driftRisk,
+        overall
+      };
+    }
+
+    function buildHash() {
+      const seed = [
+        el.mailType.value,
+        el.rewardType.value,
+        el.rewardAmount.value,
+        el.segment.value,
+        el.estimatedUsers.value,
+        el.sendWindow.value,
+        el.messageBody.value
+      ].join("|");
+      let hash = 0;
+      for (let i = 0; i < seed.length; i++) hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0;
+      return `MAILCONFIGHASH-${Math.abs(hash).toString(16).toUpperCase().padStart(8, "0")}`;
+    }
+
+    function renderScenarioButtons() {
+      el.scenarioRow.innerHTML = "";
+      Object.values(scenarios).forEach((s) => {
+        const btn = document.createElement("button");
+        btn.className = `scenario-btn ${state.currentScenario === s.key ? "active" : ""}`;
+        btn.type = "button";
+        btn.innerHTML = `<strong>${s.name}</strong><p>${s.desc}</p>`;
+        btn.addEventListener("click", () => loadScenario(s.key));
+        el.scenarioRow.appendChild(btn);
+      });
+    }
+
+    function renderRisk(config) {
+      const bannerMap = {
+        safe: ["safe", "当前配置可进入审批", "数值、范围和资产价值均在可控区间内，建议进入人工复核。"],
+        warn: ["warn", "当前配置需升级校验", "检测到高价值资产或范围偏差，系统会提升审批等级，并要求灰度覆盖更多样本。"],
+        danger: ["danger", "当前配置触发高危熔断", "数值或目标范围明显偏离历史基线，提交审批按钮已被锁定。"]
+      };
+      const [cls, title, copy] = bannerMap[config.overall];
+      el.riskBanner.className = `banner ${cls}`;
+      el.riskTitle.textContent = title;
+      el.riskCopy.textContent = copy;
+
+      const items = [
+        [
+          config.amountRisk,
+          `数值校验：${rewardRules[config.rewardType].label} x ${config.rewardAmount}`,
+          `历史常用区间为 ${config.base.baselineMin} - ${config.base.baselineMax}。当前判断为 ${config.amountRisk === "danger" ? "超高危" : config.amountRisk === "warn" ? "需升级复核" : "正常"}。`
+        ],
+        [
+          config.audienceRisk,
+          `范围校验：${segmentHints[config.segment]} / ${config.estimatedUsers.toLocaleString()} 人`,
+          config.audienceRisk === "safe" ? "触达人群与典型补偿范围接近。" : "检测到范围偏大或直接命中全服，系统将追加目标画像对比和小流量试发。"
+        ],
+        [
+          config.rule.highValue ? "warn" : "safe",
+          "模板校验与高价值锁",
+          config.rule.highValue ? "当前为高价值资产模板，灰度通过后原单将自动只读。" : "普通资产模板可编辑，但冻结后仍需通过 Hash 一致性校验。"
+        ],
+        [
+          "violet",
+          "Agent 摘要建议",
+          config.overall === "danger" ? "建议先回退到基础货币或缩小目标范围，再重跑审批。" : "建议继续推进审批，并重点观察真实目标分群覆盖度。"
+        ]
+      ];
+
+      el.riskChecklist.innerHTML = "";
+      items.forEach(([tone, titleText, desc]) => {
+        const node = document.createElement("div");
+        node.className = "check-item";
+        node.innerHTML = `<span class="dot ${tone}"></span><div><strong>${titleText}</strong><p>${desc}</p></div>`;
+        el.riskChecklist.appendChild(node);
+      });
+
+      el.baselineHint.textContent = `${config.base.baselineMin} - ${config.base.baselineMax}`;
+      el.volumeHint.textContent = (config.rewardAmount * config.estimatedUsers * config.rule.volumeFactor / 1000000).toFixed(1) + "M";
+      el.driftHint.textContent = config.audienceRisk === "danger" ? "高危漂移" : config.audienceRisk === "warn" ? "需核验" : "正常";
+      el.templateHint.textContent = config.rule.highValue ? "高价值锁定" : "普通";
+    }
+
+    function renderTimeline() {
+      const statuses = {
+        draft: state.locked ? "done" : "active",
+        review: state.reviewed ? "done" : state.locked ? "active" : "",
+        approve: state.approved ? "done" : state.reviewed ? "active" : "",
+        gray: state.grayed ? "done" : state.approved ? "active" : "",
+        pilot: state.piloted ? "done" : state.grayed ? "active" : "",
+        preflight: state.preflight ? "done" : state.piloted ? "active" : "",
+        launch: state.launched ? "done" : state.preflight ? "active" : state.interrupted ? "locked" : ""
+      };
+      el.timelineList.innerHTML = "";
+      timelineSteps.forEach(([key, title, desc], index) => {
+        const status = statuses[key] || "";
+        const node = document.createElement("div");
+        node.className = `timeline-card ${status}`.trim();
+        node.innerHTML = `
+          <div class="timeline-main">
+            <div class="step-no">${index + 1}</div>
+            <div>
+              <strong>${title}</strong>
+              <p>${desc}</p>
+            </div>
+          </div>
+          <span class="pill ${status === "done" ? "green" : status === "active" ? "blue" : status === "locked" ? "red" : "gold"}">
+            ${status === "done" ? "完成" : status === "active" ? "进行中" : status === "locked" ? "锁定" : "待处理"}
+          </span>
+        `;
+        el.timelineList.appendChild(node);
+      });
+    }
+
+    function renderSnapshot(config) {
+      const hash = state.locked ? buildHash() : "MAILCONFIGHASH: PENDING";
+      el.hashBox.textContent = state.locked ? hash : "MAILCONFIGHASH: PENDING";
+      el.snapshotVersion.textContent = `v${state.version} ${state.locked ? "冻结快照" : "草稿"}`;
+      el.snapshotState.textContent = state.locked ? "只读，变更需新建修订版" : "可编辑";
+      el.preflightState.textContent = state.preflight ? "通过" : "未执行";
+      el.snapshotPill.className = `pill ${state.locked ? "red" : "dark"}`;
+      el.snapshotPill.textContent = state.locked ? "快照已冻结" : "未冻结";
+      el.snapshotHint.textContent = state.locked
+        ? `当前审批链绑定 ${hash}。任何关键字段变更都会使审批与灰度结果失效。`
+        : "提交审批后会生成唯一配置 Hash，后续灰度与正式发送必须强绑定。";
+    }
+
+    function renderSamples(config) {
+      el.sampleGrid.innerHTML = "";
+      sampleProfiles.forEach((profile, idx) => {
+        const grayPass = state.grayed ? (config.overall === "danger" ? idx < 2 : true) : false;
+        const statusClass = !state.grayed ? "gold" : grayPass ? "green" : "red";
+        const statusText = !state.grayed ? "待灰度" : grayPass ? "领取正常" : "覆盖不足";
+        const card = document.createElement("div");
+        card.className = "sample-card";
+        card.innerHTML = `
+          <strong>${profile.title}</strong>
+          <p>${profile.desc}</p>
+          <p style="margin-top:8px;"><span class="pill ${statusClass}">${profile.cover} · ${statusText}</span></p>
+        `;
+        el.sampleGrid.appendChild(card);
+      });
+      const progress = state.grayed ? (config.overall === "danger" ? 48 : 100) : state.approved ? 20 : 0;
+      el.grayBar.style.width = progress + "%";
+      el.grayHint.textContent = state.grayed
+        ? config.overall === "danger"
+          ? "灰度发现高价值配置与目标范围偏差过大，系统保持锁定，需回退修改后重新冻结。"
+          : "灰度通过，原单已进入只读状态，可继续真实分群小流量试发。"
+        : "需覆盖不同区服、平台、渠道和账号状态。灰度通过后原单进入只读。";
+    }
+
+    function renderAgents(config) {
+      const cards = [
+        ["blue", "风险识别 Agent", config.overall === "danger" ? "建议先把高价值资产改回基础货币，或缩小目标范围后重试。" : "当前配置与历史异常补偿接近，可继续推进审批。"],
+        ["violet", "灰度分析 Agent", state.grayed ? "已汇总白名单领取结果并锁定快照版本。" : "建议覆盖安卓、iOS、渠道服和回流玩家样本。"],
+        ["gold", "发前预检 Agent", state.preflight ? "Hash、一致性和高价值资产总量已通过最终核对。" : "尚未执行最终预检，平台不会自动放行正式发送。"],
+        ["teal", "公告与工单 Agent", state.interrupted ? "已生成事故摘要、公告草稿与工单初稿，等待人工确认。" : "待命中，异常发生时辅助输出工单和对外口径。"]
+      ];
+      el.agentGrid.innerHTML = "";
+      cards.forEach(([tone, title, desc]) => {
+        const card = document.createElement("div");
+        card.className = "agent-card";
+        card.innerHTML = `<span class="pill ${tone}">${title}</span><p style="margin-top:12px;">${desc}</p>`;
+        el.agentGrid.appendChild(card);
+      });
+    }
+
+    function renderMonitors(config) {
+      const items = [
+        ["blue", "技术监控健康度", state.launched ? 92 : state.piloted ? 76 : 38, "接口成功率、领取失败率、日志告警"],
+        ["gold", "目标人数一致性", config.audienceRisk === "danger" ? 30 : config.audienceRisk === "warn" ? 58 : 91, "预计人数与历史基线、人群画像的偏差"],
+        ["red", "高价值资产暴露", config.rule.highValue ? (config.overall === "danger" ? 96 : 67) : 18, "单位时间内高价值资产发放量"],
+        ["green", "真实分群匹配度", state.grayed ? (config.overall === "danger" ? 44 : 88) : 25, "目标分群外异常领取与样本匹配情况"]
+      ];
+      el.monitorMap.innerHTML = "";
+      items.forEach(([tone, title, value, desc]) => {
+        const node = document.createElement("div");
+        node.className = "heat-item";
+        node.innerHTML = `
+          <div class="heat-item-head">
+            <strong>${title}</strong>
+            <span class="pill ${tone}">${value}%</span>
+          </div>
+          <div class="bar ${tone}"><span style="width:${value}%"></span></div>
+          <p style="margin:10px 0 0;">${desc}</p>
+        `;
+        el.monitorMap.appendChild(node);
+      });
+    }
+
+    function renderLogs() {
+      el.logList.innerHTML = "";
+      state.logs.forEach((entry) => {
+        const tone = entry.tone === "danger" ? "red" : entry.tone === "success" ? "green" : entry.tone === "info" ? "blue" : "gold";
+        const node = document.createElement("div");
+        node.className = "log-item";
+        node.innerHTML = `
+          <div class="log-head">
+            <strong>${entry.time}</strong>
+            <span class="pill ${tone}">${entry.tone === "danger" ? "高危" : entry.tone === "success" ? "成功" : entry.tone === "info" ? "记录" : "提示"}</span>
+          </div>
+          <span>${entry.text}</span>
+        `;
+        el.logList.appendChild(node);
+      });
+    }
+
+    function renderMetrics(config) {
+      el.metricRisk.textContent = config.overall === "danger" ? "P0" : config.overall === "warn" ? "P1" : "P2";
+      el.metricRiskCopy.textContent = config.overall === "danger"
+        ? "配置已经触发高危熔断，系统会阻断进入审批。"
+        : config.overall === "warn"
+          ? "当前配置会升级审批与灰度校验等级。"
+          : "稳态场景，可按标准流程推进。";
+      el.metricAudience.textContent = config.estimatedUsers.toLocaleString();
+      el.metricAudienceCopy.textContent = `${segmentHints[config.segment]} / ${rewardRules[config.rewardType].label} 模板`;
+      el.metricLaunch.textContent = state.launched ? "已解锁" : "锁定";
+      el.metricLaunchCopy.textContent = state.launched
+        ? "正式发送已解锁，但仍保留熔断与业务异常告警。"
+        : "未完成全部前置步骤前，系统不会放出正式发送权限。";
+      el.metricSnapshot.textContent = state.locked ? "已冻结" : "未冻结";
+      el.metricGray.textContent = state.grayed ? (config.overall === "danger" ? "48%" : "100%") : "0%";
+      el.metricBusiness.textContent = state.interrupted ? "告警中" : state.launched ? "监控中" : "待机";
+      el.metricAgent.textContent = state.interrupted ? "处置中" : "可用";
+    }
+
+    function renderButtons(config) {
+      el.btnFreeze.disabled = config.overall === "danger";
+      el.btnReview.disabled = !state.locked || state.reviewed;
+      el.btnApprove.disabled = !state.reviewed || state.approved;
+      el.btnGray.disabled = !state.approved || state.grayed;
+      el.btnPilot.disabled = !state.grayed || config.overall === "danger" || state.piloted;
+      el.btnPreflight.disabled = !state.piloted || state.preflight;
+      el.btnLaunch.disabled = !state.preflight || state.launched || state.interrupted;
+      el.btnInterrupt.disabled = !state.launched && !state.piloted;
+    }
+
+    function render() {
+      const config = getConfig();
+      renderScenarioButtons();
+      renderRisk(config);
+      renderTimeline();
+      renderSnapshot(config);
+      renderSamples(config);
+      renderAgents(config);
+      renderMonitors(config);
+      renderLogs();
+      renderMetrics(config);
+      renderButtons(config);
+    }
+
+    function onFieldChange() {
+      if (state.locked) {
+        resetFlow();
+        state.version += 1;
+        log("检测到关键字段变更，原审批与灰度结果已自动失效，流程回退到待审批。", "danger");
+      }
+      render();
+    }
+
+    function attach() {
+      ["mailType", "rewardType", "rewardAmount", "segment", "estimatedUsers", "sendWindow", "messageBody"].forEach((id) => {
+        el[id].addEventListener("input", onFieldChange);
+      });
+
+      el.btnAnalyze.addEventListener("click", () => {
+        const config = getConfig();
+        log(`已重跑风险分析：当前风险等级 ${config.overall.toUpperCase()}。`, config.overall === "danger" ? "danger" : "info");
+        render();
+      });
+
+      el.btnHeroAnalyze.addEventListener("click", () => el.btnAnalyze.click());
+
+      el.btnFreeze.addEventListener("click", () => {
+        state.locked = true;
+        state.version += 1;
+        log(`配置已冻结为 v${state.version}，生成不可变快照并进入人工复核。`, "success");
+        render();
+      });
+
+      el.btnReview.addEventListener("click", () => {
+        state.reviewed = true;
+        log("人工复核完成：已核对奖励类型、数值、目标范围和模板版本。", "success");
+        render();
+      });
+
+      el.btnApprove.addEventListener("click", () => {
+        state.approved = true;
+        log("业务审批放行：允许进入正式服白名单灰度。", "success");
+        render();
+      });
+
+      el.btnGray.addEventListener("click", () => {
+        const config = getConfig();
+        state.grayed = true;
+        if (config.overall === "danger") {
+          log("正式服灰度未通过：高价值配置与目标范围偏离过大，系统维持锁定。", "danger");
+        } else {
+          log("正式服灰度通过：白名单账号已真实收件、领取，原单进入只读状态。", "success");
+        }
+        render();
+      });
+
+      el.btnPilot.addEventListener("click", () => {
+        state.piloted = true;
+        log("真实分群小流量试发完成：业务与技术监控未发现异常。", "success");
+        render();
+      });
+
+      el.btnPreflight.addEventListener("click", () => {
+        state.preflight = true;
+        log("发前预检通过：审批 Hash、灰度 Hash、发送 Hash 一致。", "success");
+        render();
+      });
+
+      el.btnLaunch.addEventListener("click", () => {
+        state.launched = true;
+        log("正式发送已解锁：平台仍保留业务异常告警与人工熔断权。", "success");
+        render();
+      });
+
+      el.btnInterrupt.addEventListener("click", () => {
+        state.interrupted = true;
+        log("触发熔断止损：已暂停后续批次，并生成事故处置入口。", "danger");
+        render();
+      });
+    }
+
+    bind();
+    attach();
+    loadScenario("safe");
+  </script>
+</body>
+</html>

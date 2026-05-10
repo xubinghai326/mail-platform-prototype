@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>邮件发放平台原型 · 异常熔断 / 事故处置</title>
+  <link rel="stylesheet" href="./prototype-assets/ui.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">熔</div>
+        <div class="brand-text">
+          <strong>异常熔断 / 事故处置页</strong>
+          <span>高保真汇报版 · 风险止损 / 协同 / 对外口径</span>
+        </div>
+      </div>
+      <nav class="topnav">
+        <a href="./mail-platform-prototype.html">返回主控台</a>
+        <a href="#incidentOverview" class="active">事故总览</a>
+        <a href="#triage">分级研判</a>
+        <a href="#actions">止损处置</a>
+        <a href="#response">对外响应</a>
+      </nav>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="hero-eyebrow">Incident Handling</div>
+        <h3>熔断不是结束，而是处置链路的起点</h3>
+        <p>
+          这个页面承接主控台中的“触发熔断止损”动作，演示从事故识别、范围研判、止损决策、对外同步到复盘沉淀的完整闭环。
+        </p>
+        <div class="side-links">
+          <a class="side-link" href="#incidentOverview">
+            <strong>01. 事故快照</strong>
+            <span>确认哪一版快照出问题、影响到哪些玩家、当前是否已锁定。</span>
+          </a>
+          <a class="side-link" href="#triage">
+            <strong>02. 影响面研判</strong>
+            <span>区分未领取、已领取未消耗、已消耗三类处置对象。</span>
+          </a>
+          <a class="side-link" href="#actions">
+            <strong>03. 止损动作</strong>
+            <span>撤回、停发、补发、公告、工单同步与人工追责。</span>
+          </a>
+          <a class="side-link" href="#response">
+            <strong>04. 对外节奏</strong>
+            <span>公告草稿、同步时间、下一轮官方反馈节奏。</span>
+          </a>
+        </div>
+      </aside>
+
+      <main class="content">
+        <section id="incidentOverview" class="hero-grid">
+          <article class="hero-card">
+            <div class="hero-eyebrow">Incident Control Room</div>
+            <h1>先冻结扩散，<br />再把处置节奏收回到系统里</h1>
+            <p>
+              本页演示邮件事故在正式发送后如何被系统识别、如何组织人工决策，以及 Agent 如何在不拥有最终处置权的前提下，帮助生成影响面摘要、公告草稿、工单与复盘初稿。
+            </p>
+            <div class="hero-actions">
+              <button class="btn btn-danger" id="btnLockAll">锁定全部后续批次</button>
+              <button class="btn btn-secondary" id="btnRefreshIncident">刷新事故研判</button>
+              <a class="btn btn-secondary" href="./mail-platform-prototype.html">返回主控台查看发送链路</a>
+            </div>
+          </article>
+
+          <div class="metric-rail">
+            <article class="metric-card">
+              <small>事故等级</small>
+              <strong id="incidentLevel">P0</strong>
+              <p id="incidentLevelCopy">高价值资产误发，已触发系统熔断，需立即研判影响范围。</p>
+            </article>
+            <article class="metric-card">
+              <small>已触达玩家</small>
+              <strong id="incidentReach">182,430</strong>
+              <p id="incidentReachCopy">当前为已送达量，不等于最终已领取量。</p>
+            </article>
+            <article class="metric-card dark-card">
+              <small>当前控制状态</small>
+              <strong id="incidentControl">已熔断</strong>
+              <p id="incidentControlCopy">后续批次已暂停，进入事故处置流。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="summary-grid">
+          <article class="metric-card">
+            <small>未领取玩家</small>
+            <strong id="metricUnread">96,200</strong>
+            <p>优先适用撤回或停发，不涉及已到账资产回收。</p>
+          </article>
+          <article class="metric-card">
+            <small>已领取未消耗</small>
+            <strong id="metricClaimed">63,540</strong>
+            <p>可考虑有限追回，但需人工最终确认。</p>
+          </article>
+          <article class="metric-card">
+            <small>已消耗或复杂场景</small>
+            <strong id="metricConsumed">22,690</strong>
+            <p>进入人工处置与补偿决策，不走自动追回。</p>
+          </article>
+          <article class="metric-card">
+            <small>舆情温度</small>
+            <strong id="metricSentiment">78%</strong>
+            <p>社区负面反馈正在抬升，需同步官方口径。</p>
+          </article>
+        </section>
+
+        <section class="card">
+          <div class="section-head">
+            <div>
+              <h2>事故场景切换</h2>
+              <p>模拟不同事故类型下的处置路径，便于汇报中展示系统的适应性。</p>
+            </div>
+            <span class="pill red">Incident Scenarios</span>
+          </div>
+          <div class="scenario-row" id="incidentScenarios"></div>
+        </section>
+
+        <section id="triage" class="incident-grid">
+          <div class="stack">
+            <article class="card">
+              <div class="section-head">
+                <div>
+                  <h2>01. 事故快照与根因摘要</h2>
+                  <p>先明确出问题的是哪一版配置、什么类型的问题、影响到哪些人。</p>
+                </div>
+                <span class="pill blue">Snapshot</span>
+              </div>
+              <div class="snapshot-box">
+                <div class="hash-box" id="incidentHash">MAILCONFIGHASH-6FD21A3B</div>
+                <div class="snapshot-row">
+                  <span>事故版本</span>
+                  <strong id="incidentVersion">v3 冻结快照</strong>
+                </div>
+                <div class="snapshot-row">
+                  <span>事故类型</span>
+                  <strong id="incidentType">高价值奖励误配</strong>
+                </div>
+                <div class="snapshot-row">
+                  <span>触发来源</span>
+                  <strong id="incidentSource">业务监控异常 + 玩家投诉聚类</strong>
+                </div>
+              </div>
+              <div class="helper" id="incidentHint">
+                当前页聚焦“已经触发熔断后的处置”，不会再允许发送链路继续推进。
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="section-head">
+                <div>
+                  <h2>02. 影响面分层</h2>
+                  <p>根据玩家状态不同，决定是否撤回、是否可以追回、是否必须转人工处置。</p>
+                </div>
+                <span class="pill gold">Triage</span>
+              </div>
+              <div class="checklist" id="triageList"></div>
+            </article>
+
+            <article class="card">
+              <div class="section-head">
+                <div>
+                  <h2>03. 事故热区看板</h2>
+                  <p>同时看区服、渠道、玩家状态和资产暴露，避免只凭单一指标做判断。</p>
+                </div>
+                <span class="pill teal">Heatmap</span>
+              </div>
+              <div class="heatmap" id="incidentHeatmap"></div>
+            </article>
+          </div>
+
+          <div class="stack">
+            <article class="card">
+              <div class="section-head">
+                <div>
+                  <h2>事故处置状态机</h2>
+                  <p>熔断后按“识别、分级、止损、公告、工单、复盘”推进。</p>
+                </div>
+                <span class="pill violet">Status Flow</span>
+              </div>
+              <div class="timeline-list" id="incidentTimeline"></div>
+            </article>
+
+            <article class="card dark-card">
+              <div class="section-head">
+                <div>
+                  <h2>Agent 处置建议</h2>
+                  <p>自动给摘要和建议，但所有高风险动作仍由人拍板。</p>
+                </div>
+                <span class="pill dark">Assistive Only</span>
+              </div>
+              <div class="agent-grid" id="incidentAgents"></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="actions" class="double-grid">
+          <article class="card">
+            <div class="section-head">
+              <div>
+                <h2>04. 止损动作面板</h2>
+                <p>把不同对象的处置方式拆开，不把所有情况粗暴归为“全量追回”。</p>
+              </div>
+              <span class="pill red">Actions</span>
+            </div>
+            <div class="decision-grid" id="actionGrid"></div>
+            <div class="action-row">
+              <button class="btn btn-secondary" id="btnWithdraw">撤回未领取邮件</button>
+              <button class="btn btn-danger" id="btnStopSend">冻结后续发放</button>
+              <button class="btn btn-violet" id="btnManualCase">转人工复杂处置</button>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="section-head">
+              <div>
+                <h2>05. 工单同步与责任协同</h2>
+                <p>事故不是运营单点处理，要尽快让研发、测试、客服和舆情进入统一节奏。</p>
+              </div>
+              <span class="pill blue">Coordination</span>
+            </div>
+            <div class="command-list" id="commandList"></div>
+          </article>
+        </section>
+
+        <section id="response" class="incident-grid">
+          <article class="card">
+            <div class="section-head">
+              <div>
+                <h2>06. 对外口径与同步节奏</h2>
+                <p>在技术结论未完全明确时，也要先给玩家一个稳定预期，而不是长时间沉默。</p>
+              </div>
+              <span class="pill green">External Response</span>
+            </div>
+            <div class="banner warn" id="responseBanner">
+              <h3 id="responseTitle">建议先发布“已收到反馈，正在核实”口径</h3>
+              <p id="responseCopy">当前事故仍在统计影响范围，建议先给出下一次同步时间，避免不确定性放大玩家情绪。</p>
+            </div>
+            <div class="mini-grid" id="responseCards"></div>
+            <div class="action-row">
+              <button class="btn btn-secondary" id="btnDraftNotice">生成公告草稿</button>
+              <button class="btn btn-primary" id="btnConfirmNotice">人工确认对外发布</button>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="section-head">
+              <div>
+                <h2>07. 审计日志与复盘沉淀</h2>
+                <p>把谁发现、谁拍板、谁执行、何时同步都固化下来，便于事后复盘。</p>
+              </div>
+              <span class="pill gold">Review Trail</span>
+            </div>
+            <div class="log-list" id="incidentLogs"></div>
+            <div class="footer-note">
+              复盘阶段会自动汇总时间线、影响范围、已采取动作、舆情反馈和流程缺口，但最终结论仍由人工确认。
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const incidentScenarios = {
+      reward: {
+        key: "reward",
+        name: "高价值误发",
+        desc: "将基础货币误配成钻石，已部分领取并引发业务异常告警。",
+        level: "P0",
+        type: "高价值奖励误配",
+        reach: 182430,
+        unread: 96200,
+        claimed: 63540,
+        consumed: 22690,
+        sentiment: 78,
+        source: "业务监控异常 + 玩家投诉聚类",
+        response: "建议先发布“已收到反馈，正在核实”口径"
+      },
+      segment: {
+        key: "segment",
+        name: "范围误发",
+        desc: "目标分群误扩大到全服，奖励价值不高，但影响面非常广。",
+        level: "P1",
+        type: "目标范围漂移",
+        reach: 628500,
+        unread: 371200,
+        claimed: 191300,
+        consumed: 66000,
+        sentiment: 64,
+        source: "目标人数偏差告警 + 客服集中反馈",
+        response: "建议先解释受影响范围，并同步下一轮核实节点"
+      },
+      schedule: {
+        key: "schedule",
+        name: "错误时机发送",
+        desc: "内容和对象都正确，但发送时机过早，导致未修复问题先发补偿。",
+        level: "P2",
+        type: "发送窗口配置错误",
+        reach: 86420,
+        unread: 47200,
+        claimed: 28140,
+        consumed: 11080,
+        sentiment: 42,
+        source: "研发未确认修复 + 社区误解补偿含义",
+        response: "建议先同步修复进度，再说明补偿目的"
+      }
+    };
+
+    const incidentState = {
+      current: "reward",
+      locked: true,
+      noticeDrafted: false,
+      noticeApproved: false,
+      actions: [],
+      logs: []
+    };
+
+    const triageTemplates = {
+      unread: ["red", "未领取玩家", "可直接撤回或停发，不涉及已到账资产回收。"],
+      claimed: ["gold", "已领取未消耗", "可评估有限追回，但需人工确认，不走自动全量扣回。"],
+      consumed: ["violet", "已消耗或复杂场景", "进入人工处置、补偿决策和公告同步，不承诺“无损还原”。"]
+    };
+
+    const incidentTimeline = [
+      ["detect", "事故识别", "系统发现业务异常或收到集中投诉。"],
+      ["grade", "事故分级", "运营负责人确认等级与影响范围。"],
+      ["freeze", "熔断冻结", "暂停后续批次，锁住进一步扩散。"],
+      ["actions", "止损动作", "按未领取、已领取未消耗、已消耗分层处置。"],
+      ["notice", "对外同步", "发布已收到反馈、正在核实、下次同步时间。"],
+      ["review", "复盘沉淀", "沉淀时间线、工单、公告与流程缺口。"]
+    ];
+
+    const els = {};
+
+    function bind() {
+      [
+        "incidentScenarios", "incidentLevel", "incidentLevelCopy", "incidentReach", "incidentReachCopy", "incidentControl",
+        "incidentControlCopy", "metricUnread", "metricClaimed", "metricConsumed", "metricSentiment", "incidentHash",
+        "incidentVersion", "incidentType", "incidentSource", "incidentHint", "triageList", "incidentHeatmap", "incidentTimeline",
+        "incidentAgents", "actionGrid", "commandList", "responseBanner", "responseTitle", "responseCopy", "responseCards",
+        "incidentLogs", "btnLockAll", "btnRefreshIncident", "btnWithdraw", "btnStopSend", "btnManualCase", "btnDraftNotice",
+        "btnConfirmNotice"
+      ].forEach((id) => { els[id] = document.getElementById(id); });
+    }
+
+    function scenario() {
+      return incidentScenarios[incidentState.current];
+    }
+
+    function pushLog(text, tone = "info") {
+      const time = new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      incidentState.logs.unshift({ time, text, tone });
+      incidentState.logs = incidentState.logs.slice(0, 8);
+    }
+
+    function loadScenario(key) {
+      incidentState.current = key;
+      incidentState.noticeDrafted = false;
+      incidentState.noticeApproved = false;
+      incidentState.actions = [];
+      incidentState.logs = [];
+      pushLog(`已切换到事故场景：${incidentScenarios[key].name}`, "info");
+      render();
+    }
+
+    function renderScenarioButtons() {
+      els.incidentScenarios.innerHTML = "";
+      Object.values(incidentScenarios).forEach((item) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `scenario-btn ${incidentState.current === item.key ? "active" : ""}`;
+        btn.innerHTML = `<strong>${item.name}</strong><p>${item.desc}</p>`;
+        btn.addEventListener("click", () => loadScenario(item.key));
+        els.incidentScenarios.appendChild(btn);
+      });
+    }
+
+    function renderSummary() {
+      const s = scenario();
+      els.incidentLevel.textContent = s.level;
+      els.incidentLevelCopy.textContent = `${s.type}，当前已进入熔断与人工处置流。`;
+      els.incidentReach.textContent = s.reach.toLocaleString();
+      els.incidentReachCopy.textContent = "当前为已送达量，不等于最终已领取量。";
+      els.incidentControl.textContent = "已熔断";
+      els.incidentControlCopy.textContent = "后续批次已暂停，所有新发放权限被锁住。";
+      els.metricUnread.textContent = s.unread.toLocaleString();
+      els.metricClaimed.textContent = s.claimed.toLocaleString();
+      els.metricConsumed.textContent = s.consumed.toLocaleString();
+      els.metricSentiment.textContent = `${s.sentiment}%`;
+      els.incidentHash.textContent = "MAILCONFIGHASH-6FD21A3B";
+      els.incidentVersion.textContent = "v3 冻结快照";
+      els.incidentType.textContent = s.type;
+      els.incidentSource.textContent = s.source;
+    }
+
+    function renderTriage() {
+      const s = scenario();
+      const triageData = [
+        ["unread", s.unread],
+        ["claimed", s.claimed],
+        ["consumed", s.consumed]
+      ];
+      els.triageList.innerHTML = "";
+      triageData.forEach(([key, value]) => {
+        const [tone, title, desc] = triageTemplates[key];
+        const node = document.createElement("div");
+        node.className = "check-item";
+        node.innerHTML = `
+          <span class="dot ${tone}"></span>
+          <div>
+            <strong>${title} · ${value.toLocaleString()} 人</strong>
+            <p>${desc}</p>
+          </div>
+        `;
+        els.triageList.appendChild(node);
+      });
+    }
+
+    function renderHeatmap() {
+      const s = scenario();
+      const items = [
+        ["red", "高价值资产暴露", s.key === "reward" ? 94 : s.key === "segment" ? 52 : 28, "当前已发放高价值资产总量"],
+        ["gold", "影响面扩散速度", s.key === "segment" ? 91 : s.key === "reward" ? 74 : 43, "送达范围和投诉增长速度"],
+        ["blue", "客服工单压力", s.key === "segment" ? 79 : s.key === "reward" ? 86 : 48, "客服侧已收到的集中工单量"],
+        ["green", "未领取可止损空间", s.unread / s.reach * 100, "可直接撤回或停发的剩余空间"]
+      ];
+      els.incidentHeatmap.innerHTML = "";
+      items.forEach(([tone, title, value, desc]) => {
+        const node = document.createElement("div");
+        node.className = "heat-item";
+        node.innerHTML = `
+          <div class="heat-item-head">
+            <strong>${title}</strong>
+            <span class="pill ${tone}">${Math.round(value)}%</span>
+          </div>
+          <div class="bar ${tone}"><span style="width:${Math.round(value)}%"></span></div>
+          <p style="margin:10px 0 0;">${desc}</p>
+        `;
+        els.incidentHeatmap.appendChild(node);
+      });
+    }
+
+    function renderTimeline() {
+      els.incidentTimeline.innerHTML = "";
+      incidentTimeline.forEach(([key, title, desc], index) => {
+        let status = "done";
+        if (key === "notice" && !incidentState.noticeApproved) status = incidentState.noticeDrafted ? "active" : "active";
+        if (key === "review" && !incidentState.noticeApproved) status = "";
+        const node = document.createElement("div");
+        node.className = `timeline-card ${status}`.trim();
+        node.innerHTML = `
+          <div class="timeline-main">
+            <div class="step-no">${index + 1}</div>
+            <div>
+              <strong>${title}</strong>
+              <p>${desc}</p>
+            </div>
+          </div>
+          <span class="pill ${status === "done" ? "green" : status === "active" ? "blue" : "gold"}">
+            ${status === "done" ? "完成" : status === "active" ? "进行中" : "待处理"}
+          </span>
+        `;
+        els.incidentTimeline.appendChild(node);
+      });
+    }
+
+    function renderAgents() {
+      const s = scenario();
+      const cards = [
+        ["blue", "影响面分析 Agent", `已聚合 ${s.reach.toLocaleString()} 名玩家的送达与领取状态，建议先处理未领取对象。`],
+        ["violet", "公告草稿 Agent", incidentState.noticeDrafted ? "已生成公告草稿，等待人工修改并确认发布时间。" : "建议优先生成“已收到反馈，正在核实”的公告模板。"],
+        ["gold", "工单协同 Agent", "已自动补齐版本号、影响范围、异常类型，并同步研发、测试、客服与舆情负责人。"],
+        ["teal", "复盘报表 Agent", incidentState.noticeApproved ? "已开始汇总时间线、动作记录和流程缺口。" : "待事故稳定后自动输出复盘初稿，不直接替代最终结论。"]
+      ];
+      els.incidentAgents.innerHTML = "";
+      cards.forEach(([tone, title, desc]) => {
+        const card = document.createElement("div");
+        card.className = "agent-card";
+        card.innerHTML = `<span class="pill ${tone}">${title}</span><p style="margin-top:12px;">${desc}</p>`;
+        els.incidentAgents.appendChild(card);
+      });
+    }
+
+    function renderActions() {
+      const cards = [
+        ["撤回未领取邮件", "适用于尚未到账玩家，风险最低，优先级最高。"],
+        ["冻结后续批次", "确保事故不再继续扩散，是熔断后的第一动作。"],
+        ["人工处置复杂场景", "对已消耗或高争议资产，避免承诺“无损追回”，交由人工决策。"],
+        ["补偿与说明方案", "根据影响范围、问题类型和社区温度，决定是否追加补偿或解释口径。"]
+      ];
+      els.actionGrid.innerHTML = "";
+      cards.forEach(([title, desc]) => {
+        const node = document.createElement("div");
+        node.className = "decision-card";
+        node.innerHTML = `<strong>${title}</strong><p>${desc}</p>`;
+        els.actionGrid.appendChild(node);
+      });
+    }
+
+    function renderCommands() {
+      const items = [
+        ["研发负责人", "确认问题根因、修复进度和是否需要停服措施。"],
+        ["QA 负责人", "复核线上复现条件，确认是否存在更多边界影响。"],
+        ["客服负责人", "同步统一回复口径和高频问题答复模板。"],
+        ["舆情负责人", "监控社区情绪变化，确认下一次官方同步时间。"]
+      ];
+      els.commandList.innerHTML = "";
+      items.forEach(([title, desc]) => {
+        const node = document.createElement("div");
+        node.className = "command-card";
+        node.innerHTML = `<div><strong>${title}</strong><p>${desc}</p></div><span class="pill blue">已同步</span>`;
+        els.commandList.appendChild(node);
+      });
+    }
+
+    function renderResponse() {
+      const s = scenario();
+      els.responseTitle.textContent = s.response;
+      els.responseCopy.textContent = "建议在没有技术结论前先给出“已收到、核实中、下次同步时间”，稳定玩家预期，避免情绪继续放大。";
+
+      const cards = [
+        ["建议首条口径", "已收到相关反馈，正在核实处理，预计 30 分钟后同步下一次进展。"],
+        ["建议补偿策略", s.key === "reward" ? "暂不承诺立即追加补偿，优先完成止损与影响面确认。" : "补偿策略需等影响范围确认后再定。"],
+        ["建议同步平台", "游戏内公告、官方社区、客服 FAQ、社媒评论区置顶回复。"],
+        ["建议更新时间", "每 30 分钟同步一次阶段性进展，避免长时间沉默。"]
+      ];
+      els.responseCards.innerHTML = "";
+      cards.forEach(([title, desc]) => {
+        const node = document.createElement("div");
+        node.className = "mini-card";
+        node.innerHTML = `<strong>${title}</strong><p>${desc}</p>`;
+        els.responseCards.appendChild(node);
+      });
+    }
+
+    function renderLogs() {
+      els.incidentLogs.innerHTML = "";
+      incidentState.logs.forEach((entry) => {
+        const tone = entry.tone === "danger" ? "red" : entry.tone === "success" ? "green" : entry.tone === "info" ? "blue" : "gold";
+        const node = document.createElement("div");
+        node.className = "log-item";
+        node.innerHTML = `
+          <div class="log-head">
+            <strong>${entry.time}</strong>
+            <span class="pill ${tone}">${entry.tone === "danger" ? "高危" : entry.tone === "success" ? "成功" : entry.tone === "info" ? "记录" : "提示"}</span>
+          </div>
+          <span>${entry.text}</span>
+        `;
+        els.incidentLogs.appendChild(node);
+      });
+    }
+
+    function render() {
+      renderScenarioButtons();
+      renderSummary();
+      renderTriage();
+      renderHeatmap();
+      renderTimeline();
+      renderAgents();
+      renderActions();
+      renderCommands();
+      renderResponse();
+      renderLogs();
+    }
+
+    function attach() {
+      els.btnLockAll.addEventListener("click", () => {
+        pushLog("已确认锁定全部后续批次，正式发送权限维持冻结。", "danger");
+        render();
+      });
+
+      els.btnRefreshIncident.addEventListener("click", () => {
+        pushLog("已刷新事故研判：影响范围、领取状态与舆情温度已更新。", "info");
+        render();
+      });
+
+      els.btnWithdraw.addEventListener("click", () => {
+        pushLog("已执行未领取邮件撤回计划，优先回收未到账对象。", "success");
+        render();
+      });
+
+      els.btnStopSend.addEventListener("click", () => {
+        pushLog("后续批次冻结状态已确认，系统不再允许继续扩量发送。", "danger");
+        render();
+      });
+
+      els.btnManualCase.addEventListener("click", () => {
+        pushLog("已将已消耗和高争议对象转入人工处置队列。", "info");
+        render();
+      });
+
+      els.btnDraftNotice.addEventListener("click", () => {
+        incidentState.noticeDrafted = true;
+        pushLog("公告草稿已生成，待人工确认正式发布内容。", "success");
+        render();
+      });
+
+      els.btnConfirmNotice.addEventListener("click", () => {
+        incidentState.noticeApproved = true;
+        pushLog("人工已确认对外口径，公告进入正式发布节奏。", "success");
+        render();
+      });
+    }
+
+    bind();
+    attach();
+    loadScenario("reward");
+  </script>
+</body>
+</html>

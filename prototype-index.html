@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>邮件发放平台原型入口</title>
+  <link rel="stylesheet" href="./prototype-assets/ui.css" />
+  <style>
+    .landing {
+      min-height: calc(100vh - 64px);
+      display: grid;
+      place-items: center;
+    }
+
+    .landing-card {
+      width: min(980px, 100%);
+      padding: 34px;
+      border-radius: var(--radius-xl);
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.8);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .landing-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 24px;
+    }
+
+    .landing-card h1 {
+      margin: 14px 0 10px;
+      font-family: "Baskerville", "Songti SC", serif;
+      font-size: clamp(34px, 4vw, 54px);
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+    }
+
+    .landing-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.8;
+      font-size: 15px;
+    }
+
+    .entry {
+      display: block;
+      padding: 22px;
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(29, 34, 48, 0.08);
+      transition: 160ms ease;
+    }
+
+    .entry:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .entry strong {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .entry span {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 13px;
+    }
+
+    @media (max-width: 860px) {
+      .landing-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell landing">
+    <section class="landing-card">
+      <div class="hero-eyebrow">Prototype Entry</div>
+      <h1>邮件发放平台前端原型</h1>
+      <p>
+        入口页用于快速打开两张演示页面：一张展示“邮件发放主链路”，一张展示“异常熔断 / 事故处置链路”。
+        两者共享同一套视觉语言，适合直接用于汇报或面试场景演示。
+      </p>
+      <div class="landing-grid">
+        <a class="entry" href="./mail-platform-prototype.html">
+          <strong>主控台原型</strong>
+          <span>展示制单、防错、审批、灰度、快照冻结、发前预检与正式发送解锁链路。</span>
+        </a>
+        <a class="entry" href="./incident-response-prototype.html">
+          <strong>异常熔断 / 事故处置页</strong>
+          <span>展示熔断后的影响面分层、止损动作、公告节奏、工单同步和复盘沉淀。</span>
+        </a>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
