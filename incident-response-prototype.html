@@ -207,11 +207,18 @@
               </div>
               <span class="pill red">Actions</span>
             </div>
+            <div class="banner warn" id="actionBanner">
+              <h3 id="actionTitle">当前建议优先锁住扩散，再处理未领取对象</h3>
+              <p id="actionCopy">建议动作顺序：先冻结后续批次，再撤回未领取邮件，最后把复杂对象转人工处置。</p>
+            </div>
             <div class="decision-grid" id="actionGrid"></div>
             <div class="action-row">
               <button class="btn btn-secondary" id="btnWithdraw">撤回未领取邮件</button>
               <button class="btn btn-danger" id="btnStopSend">冻结后续发放</button>
               <button class="btn btn-violet" id="btnManualCase">转人工复杂处置</button>
+            </div>
+            <div class="helper" id="actionHelper">
+              点击动作后，页面会更新“当前处置结果”和“建议下一步”，避免只记录日志却没有可视反馈。
             </div>
           </article>
 
@@ -244,6 +251,9 @@
             <div class="action-row">
               <button class="btn btn-secondary" id="btnDraftNotice">生成公告草稿</button>
               <button class="btn btn-primary" id="btnConfirmNotice">人工确认对外发布</button>
+            </div>
+            <div class="helper" id="responseHelper">
+              对外口径动作完成后，会明确反馈当前所处阶段，例如“已生成草稿”或“已确认发布节奏”。
             </div>
           </article>
 
@@ -316,6 +326,14 @@
       locked: true,
       noticeDrafted: false,
       noticeApproved: false,
+      allLocked: true,
+      withdrawDone: false,
+      sendFrozen: true,
+      manualQueued: false,
+      refreshing: false,
+      latestAction: "系统已初步锁住扩散，等待人工确认后续处置动作。",
+      latestActionTone: "warn",
+      nextStep: "建议优先确认后续批次冻结状态，并尽快处置未领取对象。",
       actions: [],
       logs: []
     };
@@ -344,7 +362,7 @@
         "incidentVersion", "incidentType", "incidentSource", "incidentHint", "triageList", "incidentHeatmap", "incidentTimeline",
         "incidentAgents", "actionGrid", "commandList", "responseBanner", "responseTitle", "responseCopy", "responseCards",
         "incidentLogs", "btnLockAll", "btnRefreshIncident", "btnWithdraw", "btnStopSend", "btnManualCase", "btnDraftNotice",
-        "btnConfirmNotice"
+        "btnConfirmNotice", "actionBanner", "actionTitle", "actionCopy", "actionHelper", "responseHelper"
       ].forEach((id) => { els[id] = document.getElementById(id); });
     }
 
@@ -362,6 +380,14 @@
       incidentState.current = key;
       incidentState.noticeDrafted = false;
       incidentState.noticeApproved = false;
+      incidentState.allLocked = true;
+      incidentState.withdrawDone = false;
+      incidentState.sendFrozen = true;
+      incidentState.manualQueued = false;
+      incidentState.refreshing = false;
+      incidentState.latestAction = "系统已初步锁住扩散，等待人工确认后续处置动作。";
+      incidentState.latestActionTone = "warn";
+      incidentState.nextStep = "建议优先确认后续批次冻结状态，并尽快处置未领取对象。";
       incidentState.actions = [];
       incidentState.logs = [];
       pushLog(`已切换到事故场景：${incidentScenarios[key].name}`, "info");
@@ -386,8 +412,10 @@
       els.incidentLevelCopy.textContent = `${s.type}，当前已进入熔断与人工处置流。`;
       els.incidentReach.textContent = s.reach.toLocaleString();
       els.incidentReachCopy.textContent = "当前为已送达量，不等于最终已领取量。";
-      els.incidentControl.textContent = "已熔断";
-      els.incidentControlCopy.textContent = "后续批次已暂停，所有新发放权限被锁住。";
+      els.incidentControl.textContent = incidentState.sendFrozen ? "已熔断" : "处置中";
+      els.incidentControlCopy.textContent = incidentState.sendFrozen
+        ? "后续批次已暂停，所有新发放权限被锁住。"
+        : "处置动作仍在推进，尚未完全冻结扩散。";
       els.metricUnread.textContent = s.unread.toLocaleString();
       els.metricClaimed.textContent = s.claimed.toLocaleString();
       els.metricConsumed.textContent = s.consumed.toLocaleString();
@@ -449,6 +477,8 @@
       els.incidentTimeline.innerHTML = "";
       incidentTimeline.forEach(([key, title, desc], index) => {
         let status = "done";
+        if (key === "freeze" && !incidentState.sendFrozen) status = "active";
+        if (key === "actions" && !(incidentState.withdrawDone || incidentState.manualQueued)) status = "active";
         if (key === "notice" && !incidentState.noticeApproved) status = incidentState.noticeDrafted ? "active" : "active";
         if (key === "review" && !incidentState.noticeApproved) status = "";
         const node = document.createElement("div");
@@ -488,10 +518,10 @@
 
     function renderActions() {
       const cards = [
-        ["撤回未领取邮件", "适用于尚未到账玩家，风险最低，优先级最高。"],
-        ["冻结后续批次", "确保事故不再继续扩散，是熔断后的第一动作。"],
-        ["人工处置复杂场景", "对已消耗或高争议资产，避免承诺“无损追回”，交由人工决策。"],
-        ["补偿与说明方案", "根据影响范围、问题类型和社区温度，决定是否追加补偿或解释口径。"]
+        ["撤回未领取邮件", incidentState.withdrawDone ? "已执行：未领取对象已进入撤回队列，后续只需观察回收进度。" : "适用于尚未到账玩家，风险最低，优先级最高。"],
+        ["冻结后续批次", incidentState.sendFrozen ? "已冻结：系统不再允许继续扩量发送。" : "确保事故不再继续扩散，是熔断后的第一动作。"],
+        ["人工处置复杂场景", incidentState.manualQueued ? "已转人工：复杂对象已进入专门处置队列，等待人工拍板。" : "对已消耗或高争议资产，避免承诺“无损追回”，交由人工决策。"],
+        ["补偿与说明方案", incidentState.noticeDrafted ? "已进入口径准备阶段，可结合实际影响范围决定是否追加补偿。" : "根据影响范围、问题类型和社区温度，决定是否追加补偿或解释口径。"]
       ];
       els.actionGrid.innerHTML = "";
       cards.forEach(([title, desc]) => {
@@ -500,6 +530,13 @@
         node.innerHTML = `<strong>${title}</strong><p>${desc}</p>`;
         els.actionGrid.appendChild(node);
       });
+
+      els.actionBanner.className = `banner ${incidentState.latestActionTone}`;
+      els.actionTitle.textContent = incidentState.latestAction;
+      els.actionCopy.textContent = incidentState.nextStep;
+      els.actionHelper.textContent = incidentState.refreshing
+        ? "系统正在刷新事故研判，请稍候查看最新影响面与建议动作。"
+        : "动作执行后会同步更新当前处置结果、状态机和下一步建议。";
     }
 
     function renderCommands() {
@@ -520,8 +557,16 @@
 
     function renderResponse() {
       const s = scenario();
-      els.responseTitle.textContent = s.response;
-      els.responseCopy.textContent = "建议在没有技术结论前先给出“已收到、核实中、下次同步时间”，稳定玩家预期，避免情绪继续放大。";
+      els.responseTitle.textContent = incidentState.noticeApproved
+        ? "对外口径已确认，进入正式同步节奏"
+        : incidentState.noticeDrafted
+          ? "公告草稿已生成，等待人工确认对外发布"
+          : s.response;
+      els.responseCopy.textContent = incidentState.noticeApproved
+        ? "当前建议按既定节奏在游戏内公告、官方社区与客服口径中同步，后续按 30 分钟一轮更新。"
+        : incidentState.noticeDrafted
+          ? "建议由人工确认发布时间、补偿口径和下一次同步时间后，再正式对外发布。"
+          : "建议在没有技术结论前先给出“已收到、核实中、下次同步时间”，稳定玩家预期，避免情绪继续放大。";
 
       const cards = [
         ["建议首条口径", "已收到相关反馈，正在核实处理，预计 30 分钟后同步下一次进展。"],
@@ -536,6 +581,12 @@
         node.innerHTML = `<strong>${title}</strong><p>${desc}</p>`;
         els.responseCards.appendChild(node);
       });
+
+      els.responseHelper.textContent = incidentState.noticeApproved
+        ? "当前口径状态：已确认发布。下一步应按节奏持续同步进展。"
+        : incidentState.noticeDrafted
+          ? "当前口径状态：草稿已生成，等待人工确认后发布。"
+          : "当前口径状态：尚未生成草稿。建议先产出初版公告，再交由人工审核。";
     }
 
     function renderLogs() {
@@ -566,42 +617,102 @@
       renderCommands();
       renderResponse();
       renderLogs();
+      renderButtons();
+    }
+
+    function renderButtons() {
+      els.btnLockAll.disabled = incidentState.allLocked;
+      els.btnLockAll.textContent = incidentState.allLocked ? "全部后续批次已锁定" : "锁定全部后续批次";
+      els.btnRefreshIncident.disabled = incidentState.refreshing;
+      els.btnRefreshIncident.textContent = incidentState.refreshing ? "研判刷新中..." : "刷新事故研判";
+      els.btnWithdraw.disabled = incidentState.withdrawDone;
+      els.btnWithdraw.textContent = incidentState.withdrawDone ? "未领取邮件已撤回" : "撤回未领取邮件";
+      els.btnStopSend.disabled = incidentState.sendFrozen;
+      els.btnStopSend.textContent = incidentState.sendFrozen ? "后续发放已冻结" : "冻结后续发放";
+      els.btnManualCase.disabled = incidentState.manualQueued;
+      els.btnManualCase.textContent = incidentState.manualQueued ? "已转人工复杂处置" : "转人工复杂处置";
+      els.btnDraftNotice.disabled = incidentState.noticeDrafted;
+      els.btnDraftNotice.textContent = incidentState.noticeDrafted ? "公告草稿已生成" : "生成公告草稿";
+      els.btnConfirmNotice.disabled = !incidentState.noticeDrafted || incidentState.noticeApproved;
+      els.btnConfirmNotice.textContent = incidentState.noticeApproved ? "已确认对外发布" : "人工确认对外发布";
     }
 
     function attach() {
       els.btnLockAll.addEventListener("click", () => {
+        if (incidentState.allLocked) return;
+        incidentState.allLocked = true;
+        incidentState.sendFrozen = true;
+        incidentState.latestAction = "已锁定全部后续批次";
+        incidentState.latestActionTone = "danger";
+        incidentState.nextStep = "下一步建议：优先撤回未领取邮件，并把已消耗对象转人工研判。";
         pushLog("已确认锁定全部后续批次，正式发送权限维持冻结。", "danger");
         render();
       });
 
       els.btnRefreshIncident.addEventListener("click", () => {
-        pushLog("已刷新事故研判：影响范围、领取状态与舆情温度已更新。", "info");
+        if (incidentState.refreshing) return;
+        incidentState.refreshing = true;
+        incidentState.latestAction = "系统正在刷新事故研判";
+        incidentState.latestActionTone = "blue";
+        incidentState.nextStep = "正在重新汇总影响范围、领取状态和舆情温度，请稍候。";
         render();
+        window.setTimeout(() => {
+          incidentState.refreshing = false;
+          incidentState.latestAction = "事故研判已刷新";
+          incidentState.latestActionTone = "safe";
+          incidentState.nextStep = "最新建议：维持冻结状态，优先处理未领取对象，再确认是否需要补偿说明。";
+          pushLog("已刷新事故研判：影响范围、领取状态与舆情温度已更新。", "info");
+          render();
+        }, 700);
       });
 
       els.btnWithdraw.addEventListener("click", () => {
+        if (incidentState.withdrawDone) return;
+        incidentState.withdrawDone = true;
+        incidentState.latestAction = "未领取对象撤回已执行";
+        incidentState.latestActionTone = "safe";
+        incidentState.nextStep = "下一步建议：继续维持发送冻结，并评估已领取未消耗对象是否需要有限追回。";
         pushLog("已执行未领取邮件撤回计划，优先回收未到账对象。", "success");
         render();
       });
 
       els.btnStopSend.addEventListener("click", () => {
+        if (incidentState.sendFrozen) return;
+        incidentState.sendFrozen = true;
+        incidentState.allLocked = true;
+        incidentState.latestAction = "后续发放已冻结";
+        incidentState.latestActionTone = "danger";
+        incidentState.nextStep = "下一步建议：优先执行未领取撤回，并同步客服与舆情团队统一口径。";
         pushLog("后续批次冻结状态已确认，系统不再允许继续扩量发送。", "danger");
         render();
       });
 
       els.btnManualCase.addEventListener("click", () => {
+        if (incidentState.manualQueued) return;
+        incidentState.manualQueued = true;
+        incidentState.latestAction = "复杂对象已转人工处置";
+        incidentState.latestActionTone = "violet";
+        incidentState.nextStep = "下一步建议：由运营负责人、研发与客服共同确认已消耗对象的处置和补偿方案。";
         pushLog("已将已消耗和高争议对象转入人工处置队列。", "info");
         render();
       });
 
       els.btnDraftNotice.addEventListener("click", () => {
+        if (incidentState.noticeDrafted) return;
         incidentState.noticeDrafted = true;
+        incidentState.latestAction = "公告草稿已生成";
+        incidentState.latestActionTone = "gold";
+        incidentState.nextStep = "下一步建议：人工确认发布时间、补偿口径和下次同步时间，再正式对外发布。";
         pushLog("公告草稿已生成，待人工确认正式发布内容。", "success");
         render();
       });
 
       els.btnConfirmNotice.addEventListener("click", () => {
+        if (!incidentState.noticeDrafted || incidentState.noticeApproved) return;
         incidentState.noticeApproved = true;
+        incidentState.latestAction = "对外口径已确认发布";
+        incidentState.latestActionTone = "safe";
+        incidentState.nextStep = "下一步建议：按既定节奏继续同步进展，并准备事故复盘材料。";
         pushLog("人工已确认对外口径，公告进入正式发布节奏。", "success");
         render();
       });
