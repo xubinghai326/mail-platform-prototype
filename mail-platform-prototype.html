@@ -207,6 +207,9 @@
                 <button class="btn btn-secondary" id="btnAnalyze">重新分析风险</button>
                 <button class="btn btn-primary" id="btnFreeze">提交审批并冻结快照</button>
               </div>
+              <div class="helper" id="analysisFeedback">
+                可在修改字段后点击“重新分析风险”，系统会重新计算数值、范围与高价值资产暴露。
+              </div>
             </article>
 
             <article class="card">
@@ -215,7 +218,7 @@
                   <h2>02. 风险引擎解释层</h2>
                   <p>让审批人看到系统为何判断高危，而不是只得到一个红灯结果。</p>
                 </div>
-                <span class="pill gold">Explainability</span>
+                <span class="pill gold" id="analysisStatePill">待分析</span>
               </div>
               <div class="banner safe" id="riskBanner">
                 <h3 id="riskTitle">当前配置可进入审批</h3>
@@ -472,6 +475,8 @@
       preflight: false,
       launched: false,
       interrupted: false,
+      analyzing: false,
+      lastAnalyzedAt: null,
       version: 0,
       logs: []
     };
@@ -484,6 +489,7 @@
       [
         "scenarioRow", "mailType", "rewardType", "rewardAmount", "segment", "estimatedUsers", "sendWindow", "messageBody",
         "baselineHint", "volumeHint", "driftHint", "templateHint", "riskBanner", "riskTitle", "riskCopy", "riskChecklist",
+        "analysisFeedback", "analysisStatePill",
         "timelineList", "timelineHint", "snapshotPill", "hashBox", "snapshotVersion", "snapshotState", "preflightState",
         "snapshotHint", "sampleGrid", "grayBar", "grayHint", "consistencyText", "launchText", "agentGrid", "monitorMap",
         "logList", "metricRisk", "metricRiskCopy", "metricAudience", "metricAudienceCopy", "metricLaunch",
@@ -502,6 +508,8 @@
       state.preflight = false;
       state.launched = false;
       state.interrupted = false;
+      state.analyzing = false;
+      state.lastAnalyzedAt = null;
       state.version = 0;
       state.logs = [];
     }
@@ -633,6 +641,29 @@
       el.volumeHint.textContent = (config.rewardAmount * config.estimatedUsers * config.rule.volumeFactor / 1000000).toFixed(1) + "M";
       el.driftHint.textContent = config.audienceRisk === "danger" ? "高危漂移" : config.audienceRisk === "warn" ? "需核验" : "正常";
       el.templateHint.textContent = config.rule.highValue ? "高价值锁定" : "普通";
+
+      if (state.analyzing) {
+        el.analysisStatePill.className = "pill blue";
+        el.analysisStatePill.textContent = "分析中";
+        el.analysisFeedback.textContent = "系统正在重新计算数值阈值、目标范围偏差、高价值资产暴露与历史基线对比。";
+        el.riskBanner.classList.add("flash-ring");
+      } else {
+        el.riskBanner.classList.remove("flash-ring");
+        if (state.lastAnalyzedAt) {
+          const summary = config.overall === "danger"
+            ? "结论未变：仍为高危配置，需回退奖励类型或缩小目标范围。"
+            : config.overall === "warn"
+              ? "结论已刷新：当前配置需要升级审批与灰度覆盖。"
+              : "结论已刷新：当前配置处于可控区间，可继续推进审批。";
+          el.analysisStatePill.className = `pill ${config.overall === "danger" ? "red" : config.overall === "warn" ? "gold" : "green"}`;
+          el.analysisStatePill.textContent = `已分析 ${state.lastAnalyzedAt}`;
+          el.analysisFeedback.textContent = `最近一次人工触发分析：${state.lastAnalyzedAt}。${summary}`;
+        } else {
+          el.analysisStatePill.className = "pill gold";
+          el.analysisStatePill.textContent = "待分析";
+          el.analysisFeedback.textContent = "可在修改字段后点击“重新分析风险”，系统会重新计算数值、范围与高价值资产暴露。";
+        }
+      }
     }
 
     function renderTimeline() {
@@ -779,7 +810,11 @@
     }
 
     function renderButtons(config) {
-      el.btnFreeze.disabled = config.overall === "danger";
+      el.btnAnalyze.disabled = state.analyzing;
+      el.btnHeroAnalyze.disabled = state.analyzing;
+      el.btnAnalyze.textContent = state.analyzing ? "分析中..." : "重新分析风险";
+      el.btnHeroAnalyze.textContent = state.analyzing ? "风险分析中..." : "重新分析当前场景";
+      el.btnFreeze.disabled = config.overall === "danger" || state.analyzing;
       el.btnReview.disabled = !state.locked || state.reviewed;
       el.btnApprove.disabled = !state.reviewed || state.approved;
       el.btnGray.disabled = !state.approved || state.grayed;
@@ -804,6 +839,7 @@
     }
 
     function onFieldChange() {
+      if (state.analyzing) return;
       if (state.locked) {
         resetFlow();
         state.version += 1;
@@ -818,9 +854,16 @@
       });
 
       el.btnAnalyze.addEventListener("click", () => {
-        const config = getConfig();
-        log(`已重跑风险分析：当前风险等级 ${config.overall.toUpperCase()}。`, config.overall === "danger" ? "danger" : "info");
+        if (state.analyzing) return;
+        state.analyzing = true;
         render();
+        window.setTimeout(() => {
+          state.analyzing = false;
+          state.lastAnalyzedAt = new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+          const config = getConfig();
+          log(`已重跑风险分析：当前风险等级 ${config.overall.toUpperCase()}。`, config.overall === "danger" ? "danger" : "info");
+          render();
+        }, 650);
       });
 
       el.btnHeroAnalyze.addEventListener("click", () => el.btnAnalyze.click());

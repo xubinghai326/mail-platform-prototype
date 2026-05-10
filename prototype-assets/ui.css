@@ -373,6 +373,19 @@ textarea {
 .pill.teal { color: var(--teal); background: var(--teal-soft); }
 .pill.dark { color: #e7eeff; background: rgba(255,255,255,0.12); }
 
+.flash-ring {
+  animation: flashPulse 0.9s ease;
+}
+
+@keyframes flashPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(44, 91, 255, 0.26);
+  }
+  100% {
+    box-shadow: 0 0 0 16px rgba(44, 91, 255, 0);
+  }
+}
+
 .btn {
   appearance: none;
   border: 0;
