@@ -13,7 +13,7 @@
         <div class="brand-mark">熔</div>
         <div class="brand-text">
           <strong>异常熔断 / 事故处置页</strong>
-          <span>正式版 · 风险止损 / 协同 / 对外口径</span>
+          <span>高保真汇报版 · 风险止损 / 协同 / 对外口径</span>
         </div>
       </div>
       <nav class="topnav">
@@ -286,6 +286,26 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="feedbackModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <span class="pill green" id="modalPill">执行成功</span>
+          <h3 id="modalTitle" style="margin-top: 12px;">止损动作已执行</h3>
+        </div>
+        <button class="modal-close" id="modalClose" aria-label="关闭提示">×</button>
+      </div>
+      <p id="modalBody">系统已经完成本次动作，并将结果同步到当前事故处置状态中。</p>
+      <div class="modal-note">
+        <strong id="modalNextTitle">下一步建议</strong>
+        <p id="modalNext" style="margin-top: 8px;">建议继续确认后续批次冻结状态，并同步客服与舆情负责人。</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="modalConfirm">我知道了</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const incidentScenarios = {
       reward: {
@@ -342,9 +362,16 @@
       sendFrozen: true,
       manualQueued: false,
       refreshing: false,
+      modalOpen: false,
       latestAction: "系统已初步锁住扩散，等待人工确认后续处置动作。",
       latestActionTone: "warn",
       nextStep: "建议优先确认后续批次冻结状态，并尽快处置未领取对象。",
+      modal: {
+        tone: "green",
+        title: "",
+        body: "",
+        next: ""
+      },
       actions: [],
       logs: []
     };
@@ -373,7 +400,8 @@
         "incidentVersion", "incidentType", "incidentSource", "incidentHint", "triageList", "incidentHeatmap", "incidentTimeline",
         "incidentAgents", "actionGrid", "commandList", "responseBanner", "responseTitle", "responseCopy", "responseCards",
         "incidentLogs", "btnLockAll", "btnRefreshIncident", "btnWithdraw", "btnStopSend", "btnManualCase", "btnDraftNotice",
-        "btnConfirmNotice", "actionBanner", "actionTitle", "actionCopy", "actionHelper", "responseHelper", "resultGrid"
+        "btnConfirmNotice", "actionBanner", "actionTitle", "actionCopy", "actionHelper", "responseHelper", "resultGrid",
+        "feedbackModal", "modalPill", "modalTitle", "modalBody", "modalNext", "modalClose", "modalConfirm", "modalNextTitle"
       ].forEach((id) => { els[id] = document.getElementById(id); });
     }
 
@@ -396,12 +424,29 @@
       incidentState.sendFrozen = true;
       incidentState.manualQueued = false;
       incidentState.refreshing = false;
+      incidentState.modalOpen = false;
       incidentState.latestAction = "系统已初步锁住扩散，等待人工确认后续处置动作。";
       incidentState.latestActionTone = "warn";
       incidentState.nextStep = "建议优先确认后续批次冻结状态，并尽快处置未领取对象。";
+      incidentState.modal = {
+        tone: "green",
+        title: "",
+        body: "",
+        next: ""
+      };
       incidentState.actions = [];
       incidentState.logs = [];
       pushLog(`已切换到事故场景：${incidentScenarios[key].name}`, "info");
+      render();
+    }
+
+    function openModal(tone, title, body, next) {
+      incidentState.modalOpen = true;
+      incidentState.modal = { tone, title, body, next };
+    }
+
+    function closeModal() {
+      incidentState.modalOpen = false;
       render();
     }
 
@@ -662,6 +707,27 @@
       });
     }
 
+    function renderModal() {
+      if (!incidentState.modalOpen) {
+        els.feedbackModal.classList.remove("show");
+        return;
+      }
+
+      els.feedbackModal.classList.add("show");
+      els.modalPill.className = `pill ${incidentState.modal.tone}`;
+      els.modalPill.textContent = incidentState.modal.tone === "red"
+        ? "高优先反馈"
+        : incidentState.modal.tone === "violet"
+          ? "人工接管"
+          : incidentState.modal.tone === "gold"
+            ? "待人工确认"
+            : "执行成功";
+      els.modalTitle.textContent = incidentState.modal.title;
+      els.modalBody.textContent = incidentState.modal.body;
+      els.modalNext.textContent = incidentState.modal.next;
+      els.modalNextTitle.textContent = "下一步建议";
+    }
+
     function render() {
       renderScenarioButtons();
       renderSummary();
@@ -675,6 +741,7 @@
       renderResponse();
       renderLogs();
       renderButtons();
+      renderModal();
     }
 
     function renderButtons() {
@@ -702,6 +769,12 @@
         incidentState.latestAction = "已锁定全部后续批次";
         incidentState.latestActionTone = "danger";
         incidentState.nextStep = "下一步建议：优先撤回未领取邮件，并把已消耗对象转人工研判。";
+        openModal(
+          "red",
+          "后续批次已全部锁定",
+          "系统已暂停所有后续发放批次，新的全服发送不会再继续扩散当前事故。",
+          "建议立即处理未领取对象，并同步研发、客服和舆情负责人确认下一轮动作。"
+        );
         pushLog("已确认锁定全部后续批次，正式发送权限维持冻结。", "danger");
         render();
       });
@@ -718,6 +791,12 @@
           incidentState.latestAction = "事故研判已刷新";
           incidentState.latestActionTone = "safe";
           incidentState.nextStep = "最新建议：维持冻结状态，优先处理未领取对象，再确认是否需要补偿说明。";
+          openModal(
+            "green",
+            "事故研判已刷新完成",
+            "系统已重新汇总影响范围、领取状态和舆情温度，并更新当前处置建议。",
+            "建议根据最新影响面先处理未领取对象，再判断是否需要进入补偿说明阶段。"
+          );
           pushLog("已刷新事故研判：影响范围、领取状态与舆情温度已更新。", "info");
           render();
         }, 700);
@@ -729,6 +808,12 @@
         incidentState.latestAction = "未领取对象撤回已执行";
         incidentState.latestActionTone = "safe";
         incidentState.nextStep = "下一步建议：继续维持发送冻结，并评估已领取未消耗对象是否需要有限追回。";
+        openModal(
+          "green",
+          "未领取邮件已撤回",
+          "系统已经把未到账对象加入撤回队列，当前优先级最高的低风险止损动作已完成。",
+          "建议继续维持后续发送冻结，并开始评估已领取未消耗对象是否需要进入下一步处置。"
+        );
         pushLog("已执行未领取邮件撤回计划，优先回收未到账对象。", "success");
         render();
       });
@@ -740,6 +825,12 @@
         incidentState.latestAction = "后续发放已冻结";
         incidentState.latestActionTone = "danger";
         incidentState.nextStep = "下一步建议：优先执行未领取撤回，并同步客服与舆情团队统一口径。";
+        openModal(
+          "red",
+          "后续发放已冻结",
+          "系统已停止所有后续扩量发送，当前事故不再继续向更多玩家扩散。",
+          "建议尽快执行未领取撤回，并同步客服和舆情团队使用统一回复口径。"
+        );
         pushLog("后续批次冻结状态已确认，系统不再允许继续扩量发送。", "danger");
         render();
       });
@@ -750,6 +841,12 @@
         incidentState.latestAction = "复杂对象已转人工处置";
         incidentState.latestActionTone = "violet";
         incidentState.nextStep = "下一步建议：由运营负责人、研发与客服共同确认已消耗对象的处置和补偿方案。";
+        openModal(
+          "violet",
+          "复杂对象已转人工处置",
+          "已消耗和高争议对象不再走自动流程，系统已将其转入人工处置队列。",
+          "建议由运营负责人、研发、客服共同确认这部分对象的补偿策略和外部解释口径。"
+        );
         pushLog("已将已消耗和高争议对象转入人工处置队列。", "info");
         render();
       });
@@ -760,6 +857,12 @@
         incidentState.latestAction = "公告草稿已生成";
         incidentState.latestActionTone = "gold";
         incidentState.nextStep = "下一步建议：人工确认发布时间、补偿口径和下次同步时间，再正式对外发布。";
+        openModal(
+          "gold",
+          "公告草稿已生成",
+          "系统已经生成一版可用的对外公告草稿，包含当前建议口径与下一次同步时间。",
+          "建议由人工确认发布时间、补偿说明和下次同步节奏后，再正式发布。"
+        );
         pushLog("公告草稿已生成，待人工确认正式发布内容。", "success");
         render();
       });
@@ -770,8 +873,20 @@
         incidentState.latestAction = "对外口径已确认发布";
         incidentState.latestActionTone = "safe";
         incidentState.nextStep = "下一步建议：按既定节奏继续同步进展，并准备事故复盘材料。";
+        openModal(
+          "green",
+          "对外口径已确认发布",
+          "当前公告节奏已经确认，可以按计划在游戏内、社区和客服口径中同步给玩家。",
+          "建议继续按固定时间间隔同步进展，并开始准备事故复盘材料。"
+        );
         pushLog("人工已确认对外口径，公告进入正式发布节奏。", "success");
         render();
+      });
+
+      els.modalClose.addEventListener("click", closeModal);
+      els.modalConfirm.addEventListener("click", closeModal);
+      els.feedbackModal.addEventListener("click", (event) => {
+        if (event.target === els.feedbackModal) closeModal();
       });
     }
 
