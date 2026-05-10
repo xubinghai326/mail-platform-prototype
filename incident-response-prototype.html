@@ -112,6 +112,17 @@
         <section class="card">
           <div class="section-head">
             <div>
+              <h2>处置结果汇总</h2>
+              <p>把已经完成的关键动作集中展示，避免只能靠阅读日志判断当前进度。</p>
+            </div>
+            <span class="pill teal">Result Summary</span>
+          </div>
+          <div class="decision-grid" id="resultGrid"></div>
+        </section>
+
+        <section class="card">
+          <div class="section-head">
+            <div>
               <h2>事故场景切换</h2>
               <p>模拟不同事故类型下的处置路径，便于汇报中展示系统的适应性。</p>
             </div>
@@ -362,7 +373,7 @@
         "incidentVersion", "incidentType", "incidentSource", "incidentHint", "triageList", "incidentHeatmap", "incidentTimeline",
         "incidentAgents", "actionGrid", "commandList", "responseBanner", "responseTitle", "responseCopy", "responseCards",
         "incidentLogs", "btnLockAll", "btnRefreshIncident", "btnWithdraw", "btnStopSend", "btnManualCase", "btnDraftNotice",
-        "btnConfirmNotice", "actionBanner", "actionTitle", "actionCopy", "actionHelper", "responseHelper"
+        "btnConfirmNotice", "actionBanner", "actionTitle", "actionCopy", "actionHelper", "responseHelper", "resultGrid"
       ].forEach((id) => { els[id] = document.getElementById(id); });
     }
 
@@ -446,6 +457,51 @@
           </div>
         `;
         els.triageList.appendChild(node);
+      });
+    }
+
+    function renderResultGrid() {
+      const cards = [
+        [
+          incidentState.allLocked ? "green" : "gold",
+          "后续批次状态",
+          incidentState.allLocked ? "已锁定" : "待确认",
+          incidentState.allLocked ? "系统已锁住全部后续批次，事故不会继续扩散。" : "仍需人工确认是否彻底锁住后续发送。"
+        ],
+        [
+          incidentState.withdrawDone ? "green" : "gold",
+          "未领取对象处置",
+          incidentState.withdrawDone ? "已撤回" : "待执行",
+          incidentState.withdrawDone ? "未领取对象已进入撤回队列，后续只需观察回收进度。" : "建议优先撤回未到账对象，止损成本最低。"
+        ],
+        [
+          incidentState.manualQueued ? "violet" : "gold",
+          "复杂对象状态",
+          incidentState.manualQueued ? "已转人工" : "待分流",
+          incidentState.manualQueued ? "已消耗和高争议对象已进入人工处置队列。" : "复杂对象尚未分流，需要人工决定是否补偿或解释。"
+        ],
+        [
+          incidentState.noticeApproved ? "green" : incidentState.noticeDrafted ? "blue" : "gold",
+          "对外同步状态",
+          incidentState.noticeApproved ? "已确认发布" : incidentState.noticeDrafted ? "草稿已生成" : "待准备",
+          incidentState.noticeApproved
+            ? "公告节奏已确认，可按计划同步后续进展。"
+            : incidentState.noticeDrafted
+              ? "公告草稿已完成，待人工确认后正式发布。"
+              : "建议尽快生成首条口径，避免长时间沉默。"
+        ]
+      ];
+
+      els.resultGrid.innerHTML = "";
+      cards.forEach(([tone, title, status, desc]) => {
+        const node = document.createElement("div");
+        node.className = "decision-card";
+        node.innerHTML = `
+          <span class="pill ${tone}">${status}</span>
+          <strong style="margin-top: 12px;">${title}</strong>
+          <p>${desc}</p>
+        `;
+        els.resultGrid.appendChild(node);
       });
     }
 
@@ -609,6 +665,7 @@
     function render() {
       renderScenarioButtons();
       renderSummary();
+      renderResultGrid();
       renderTriage();
       renderHeatmap();
       renderTimeline();
