@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>邮件发放平台原型 · 使用指南</title>
+  <link rel="stylesheet" href="./prototype-assets/ui.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">指</div>
+        <div class="brand-text">
+          <strong>原型使用指南</strong>
+          <span>给评审、面试官、同事的快速阅读说明</span>
+        </div>
+      </div>
+      <nav class="topnav">
+        <a href="./prototype-index.html">原型首页</a>
+        <a href="./mail-platform-prototype.html">主控台原型</a>
+        <a href="./incident-response-prototype.html">事故处置页</a>
+        <a href="#howto" class="active">使用指南</a>
+      </nav>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="hero-eyebrow">Guide</div>
+        <h3>这是什么，应该怎么看</h3>
+        <p>
+          这不是静态展示图，而是一套可交互的前端原型。建议按“先看主链路，再看异常处置”的顺序浏览，更容易理解整套设计如何围绕安全与效率平衡展开。
+        </p>
+        <div class="side-links">
+          <a class="side-link" href="#overview">
+            <strong>01. 原型目的</strong>
+            <span>先理解这套页面为什么存在，以及它回答了什么问题。</span>
+          </a>
+          <a class="side-link" href="#route">
+            <strong>02. 推荐浏览顺序</strong>
+            <span>先看哪里、后看哪里、每一页重点观察什么。</span>
+          </a>
+          <a class="side-link" href="#interaction">
+            <strong>03. 关键交互说明</strong>
+            <span>按钮、状态、风险提示和 Agent 区块分别代表什么。</span>
+          </a>
+          <a class="side-link" href="#demo">
+            <strong>04. 演示话术参考</strong>
+            <span>如果你要向别人汇报，可以按这里的顺序讲。</span>
+          </a>
+        </div>
+      </aside>
+
+      <main class="content">
+        <section id="overview" class="hero-grid">
+          <article class="hero-card">
+            <div class="hero-eyebrow">Prototype README</div>
+            <h1>这套原型是为了直观展示<br />邮件发放平台如何守住高风险操作</h1>
+            <p>
+              原型围绕一个核心问题展开：如何在运营效率与操作安全之间取得平衡，避免“把 10000 金币误发成 10000 钻石”这类高危事故。
+              因此页面重点展示的不是视觉设计本身，而是“风险如何被识别、流程如何被约束、异常如何被止损、Agent 如何在安全边界内提效”。
+            </p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="./mail-platform-prototype.html">开始浏览主控台</a>
+              <a class="btn btn-secondary" href="./incident-response-prototype.html">查看事故处置页</a>
+            </div>
+          </article>
+
+          <div class="metric-rail">
+            <article class="metric-card">
+              <small>原型包含页面</small>
+              <strong>3</strong>
+              <p>入口页、邮件发放主控台、异常熔断 / 事故处置页。</p>
+            </article>
+            <article class="metric-card">
+              <small>推荐浏览时长</small>
+              <strong>5-8 分钟</strong>
+              <p>快速浏览可理解结构，完整点按钮演示可看到交互逻辑。</p>
+            </article>
+            <article class="metric-card dark-card">
+              <small>最适合的展示场景</small>
+              <strong>方案汇报 / 面试演示</strong>
+              <p>适合直观说明你对安全、效率、止损和 AI Agent 辅助的理解。</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="route" class="double-grid">
+          <article class="card">
+            <div class="section-head">
+              <div>
+                <h2>推荐浏览顺序</h2>
+                <p>按照这个顺序看，能最快理解整体链路。</p>
+              </div>
+              <span class="pill blue">Suggested Path</span>
+            </div>
+            <div class="timeline-list">
+              <div class="timeline-card done">
+                <div class="timeline-main">
+                  <div class="step-no">1</div>
+                  <div>
+                    <strong>先打开主控台原型</strong>
+                    <p>重点看“制单、防错、审批、灰度、快照冻结、发前预检”这条主链路。</p>
+                  </div>
+                </div>
+                <span class="pill green">先看</span>
+              </div>
+              <div class="timeline-card done">
+                <div class="timeline-main">
+                  <div class="step-no">2</div>
+                  <div>
+                    <strong>切换三个预设场景</strong>
+                    <p>对比“稳态补偿、高危误配、范围漂移”下页面提示和按钮状态如何变化。</p>
+                  </div>
+                </div>
+                <span class="pill green">重点</span>
+              </div>
+              <div class="timeline-card done">
+                <div class="timeline-main">
+                  <div class="step-no">3</div>
+                  <div>
+                    <strong>再打开事故处置页</strong>
+                    <p>观察事故发生后如何分层止损、同步公告、生成工单并进入复盘。</p>
+                  </div>
+                </div>
+                <span class="pill green">后看</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="section-head">
+              <div>
+                <h2>每一页主要在讲什么</h2>
+                <p>可以把它理解成“发送前”和“发送后”两段系统能力。</p>
+              </div>
+              <span class="pill gold">Page Map</span>
+            </div>
+            <div class="mini-grid">
+              <div class="mini-card">
+                <strong>主控台原型</strong>
+                <p>回答“怎么避免发错、怎么在发出前把风险拦住”。</p>
+              </div>
+              <div class="mini-card">
+                <strong>事故处置页</strong>
+                <p>回答“如果仍然出事，怎么快速止损并控制外部影响”。</p>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section id="interaction" class="incident-grid">
+          <article class="card">
+            <div class="section-head">
+              <div>
+                <h2>关键交互怎么理解</h2>
+                <p>下面这些是最值得在演示时点出来的交互。</p>
+              </div>
+              <span class="pill violet">Interaction Notes</span>
+            </div>
+            <div class="checklist">
+              <div class="check-item">
+                <span class="dot red"></span>
+                <div>
+                  <strong>高风险数值熔断</strong>
+                  <p>当奖励数值明显偏离历史基线，例如把基础货币误配成高价值钻石时，系统会直接显示高危状态，并锁定提交审批。</p>
+                </div>
+              </div>
+              <div class="check-item">
+                <span class="dot gold"></span>
+                <div>
+                  <strong>范围偏差告警</strong>
+                  <p>如果目标分群从“异常玩家”漂移成“全服玩家”，系统会提示目标人数与画像偏差，并要求更严格的灰度验证。</p>
+                </div>
+              </div>
+              <div class="check-item">
+                <span class="dot blue"></span>
+                <div>
+                  <strong>重新分析风险</strong>
+                  <p>点击后会重新计算数值、范围和高价值资产暴露，并给出分析中状态、完成时间和最新结论。</p>
+                </div>
+              </div>
+              <div class="check-item">
+                <span class="dot violet"></span>
+                <div>
+                  <strong>不可变快照与 Hash</strong>
+                  <p>进入审批后系统会冻结配置并生成唯一 Hash，防止“审批的是 A，发出去的是 B”。</p>
+                </div>
+              </div>
+              <div class="check-item">
+                <span class="dot green"></span>
+                <div>
+                  <strong>正式服灰度与小流量试发</strong>
+                  <p>不是只验证“能不能领”，而是验证目标分群、不同样本和真实小流量放出后的行为表现。</p>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="section-head">
+              <div>
+                <h2>Agent 区块怎么看</h2>
+                <p>它不是自动发奖励，而是负责分析和辅助。</p>
+              </div>
+              <span class="pill teal">Agent Boundaries</span>
+            </div>
+            <div class="agent-grid">
+              <div class="agent-card">
+                <strong>能做什么</strong>
+                <p>监控异常、汇总样本、生成建议、草拟公告、补全工单、沉淀复盘材料。</p>
+              </div>
+              <div class="agent-card">
+                <strong>不能做什么</strong>
+                <p>不能直接替代人工审批，不能直接拥有全服发放权，也不能自行决定高风险资产追回。</p>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section id="demo" class="double-grid">
+          <article class="card">
+            <div class="section-head">
+              <div>
+                <h2>演示时可以这样讲</h2>
+                <p>如果你向别人汇报，可以按这个顺序快速说明设计价值。</p>
+              </div>
+              <span class="pill red">Demo Script</span>
+            </div>
+            <div class="timeline-list">
+              <div class="timeline-card done">
+                <div class="timeline-main">
+                  <div class="step-no">A</div>
+                  <div>
+                    <strong>先讲问题背景</strong>
+                    <p>上一轮事故本质上是高价值配置误发，因此平台目标不是只发得快，而是先把高危操作拦住。</p>
+                  </div>
+                </div>
+              </div>
+              <div class="timeline-card done">
+                <div class="timeline-main">
+                  <div class="step-no">B</div>
+                  <div>
+                    <strong>再讲主链路</strong>
+                    <p>从建单、风险识别、审批、灰度到快照冻结和发前预检，说明风险如何被逐层约束。</p>
+                  </div>
+                </div>
+              </div>
+              <div class="timeline-card done">
+                <div class="timeline-main">
+                  <div class="step-no">C</div>
+                  <div>
+                    <strong>最后讲异常处置</strong>
+                    <p>即使前面失守，系统也要支持快速熔断、分层止损、公告节奏和复盘沉淀。</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="section-head">
+              <div>
+                <h2>一句话总结这套原型</h2>
+                <p>适合放在汇报结尾，帮助听的人快速记住重点。</p>
+              </div>
+              <span class="pill blue">Wrap-up</span>
+            </div>
+            <div class="banner safe">
+              <h3>高风险强约束，关键决策人工拍板，重复事务 Agent 提效。</h3>
+              <p>
+                这套原型的价值不在于把邮件“更快地发出去”，而在于把“发前防错、发中控制、发后止损”做成一个可落地、可解释、可演示的系统闭环。
+              </p>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
